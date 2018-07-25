@@ -1,0 +1,14 @@
+apiVersion: test/test
+kind: PersistentVolumeClaim
+metadata:
+  name: test1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: test
+  selector:
+    matchLabels:
+      volume: test

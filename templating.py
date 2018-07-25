@@ -1,0 +1,90 @@
+import os
+import base64
+import logging
+import settings
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
+from jinja2.exceptions import TemplateNotFound, UndefinedError, TemplateSyntaxError
+
+
+class TemplateRenderingError(Exception):
+    pass
+
+
+log = logging.getLogger(__name__)
+
+
+def b64decode(string):
+    res = base64.decodebytes(string.encode())
+    return res.decode()
+
+
+def b64encode(string):
+    res = base64.b64encode(string.encode())
+    return res.decode()
+
+
+def get_env(templates_dir):
+    env = Environment(
+        undefined=StrictUndefined,
+        loader=FileSystemLoader([templates_dir]))
+    env.filters['b64decode'] = b64decode
+    env.filters['b64encode'] = b64encode
+    log.debug('Available templates in path {}: {}'.format(templates_dir, env.list_templates()))
+    return env
+
+
+def _create_dir(dir):
+    try:
+        os.makedirs(dir)
+    except os.error as e:
+        log.debug(e)
+        pass
+
+
+class Renderer:
+    def __init__(self, templates_dir=None):
+        self._templates_dir = templates_dir
+        if self._templates_dir is None:
+            self._templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        self._env = get_env(self._templates_dir)
+
+    def generate_by_context(self, context):
+        if context is None:
+            raise RuntimeError('Can\'t generate templates from None context')
+
+        templates = context.get('templates', [])
+        if len(templates) == 0:
+            templates = context.get('kubectl', [])
+            if len(templates) == 0:
+                return
+
+        output = []
+        for template in templates:
+            try:
+                path = self._generate_file(template, settings.TEMP_DIR, context)
+                log.info('File "{}" successfully generated'.format(path))
+                output.append(path)
+            except TemplateNotFound as e:
+                raise TemplateRenderingError('Template "{}" not found'.format(template))
+            except (UndefinedError, TemplateSyntaxError) as e:
+                raise TemplateRenderingError('Unable to render {}, due to: {}'.format(template, e))
+        return output
+
+    def _generate_file(self, item, dir,  context):
+        _create_dir(dir)
+        try:
+            log.info('Trying to generate file from template "{}" in "{}"'.format(item['template'], dir))
+            template = self._env.get_template(item['template'])
+        except TemplateNotFound as e:
+            log.info('Templates path: {}, available templates:{}'.format(self._templates_dir,
+                                                                         self._env.list_templates()))
+            raise e
+        except KeyError:
+            raise RuntimeError('Templates section doesn\'t have any template items')
+        new_name = item['template'].replace('.j2', '')
+        path = os.path.join(dir, new_name)
+        if not os.path.exists(os.path.dirname(path)):
+            _create_dir(os.path.dirname(path))
+        with open(path, 'w+') as f:
+            f.write(template.render(context))
+        return path

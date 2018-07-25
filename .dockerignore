@@ -1,0 +1,10 @@
+.dockerignore
+Dockerfile*
+.coverage
+.coveragerc
+.git/
+.gitignore
+.idea/
+.tox/
+__pychache__
+htmlcov/

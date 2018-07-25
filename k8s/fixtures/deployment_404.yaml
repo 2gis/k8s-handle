@@ -1,0 +1,6 @@
+apiVersion: test/test
+kind: Deployment
+metadata:
+  name: "404"
+spec:
+  replicas: 1

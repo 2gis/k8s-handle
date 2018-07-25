@@ -1,0 +1,15 @@
+common:
+  k8s_master_uri: https://localhost:5000
+  k8s_token: token
+  k8s_ca_base64: ca
+  k8s_namespace: namespace
+
+section-1:
+  var: "{{ env='SECTION1' }}"
+  templates:
+    - template: template1.yaml.j2
+
+section-2:
+  var: "{{ env='SECTION2' }}"
+  template:
+    - template: template1.yaml.j2

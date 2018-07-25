@@ -1,0 +1,6 @@
+apiVersion: test/test
+kind: Deployment
+metadata:
+  name: test2
+spec:
+  replicas: 1

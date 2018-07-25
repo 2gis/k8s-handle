@@ -1,0 +1,7 @@
+version: '2'
+services:
+  k8s-handle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rvadim/k8s-handle:${TAG}

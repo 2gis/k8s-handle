@@ -1,0 +1,10 @@
+common:
+  my_var: my_value
+  my_env_var: "{{ env='CUSTOM_ENV' }}"
+  k8s_master_uri: https://localhost:5000
+  k8s_namespace: namespace
+  k8s_token: ""
+
+deployment:
+  templates:
+    - template: deployment.yaml.j2

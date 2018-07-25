@@ -1,0 +1,71 @@
+common:
+  my_var: my_value
+  my_file: "{{ file='tests/fixtures/include.yaml' }}"
+  my_env_var: "{{ env='CUSTOM_ENV' }}"
+  my_conc_env_var1: "prefix-{{ env='CUSTOM_ENV' }}-postfix"
+  my_conc_env_var2: "prefix-{{ env='CUSTOM_ENV' }}"
+  my_conc_env_var3: "{{ env='CUSTOM_ENV' }}-postfix"
+  empty_var: "{{ env='EMPTY_ENV' }}"
+  k8s_master_uri: https://localhost:5000
+  k8s_token: token
+  k8s_ca_base64: ca
+  k8s_namespace: namespace
+  var:
+    router:
+        your: 1
+        my1: var1
+
+test_recursive_vars:
+  templates:
+    - template: template1.yaml.j2
+  var:
+    router:
+        my: var
+        your: 2
+
+test_dirs:
+  dirs:
+    - dst: /tmp/test_directory1/
+    - dst: /tmp/test_directory2/
+  templates:
+    - template: template1.yaml.j2
+    - template: template2.yaml.j2
+    - template: template3.yaml.j2
+    - template: innerdir/template1.yaml.j2
+
+no_templates:
+  templates:
+    - namespace: io
+
+no_templates_section:
+  new_var: 123
+
+deployment:
+  templates:
+    - template: deployment.yaml.j2
+
+deployment_without_name:
+  templates:
+    - template: deployment.json.j2
+
+service:
+  templates:
+    - template: service.yaml.j2
+
+io_2709:
+  templates:
+  - template: template4.yaml.j2
+
+not_existent_template:
+  templates:
+  - template: doesnotexist.yaml.j2
+
+section_with_kubectl:
+  dirs:
+    - dst: /tmp/test_directory1/
+    - dst: /tmp/test_directory2/
+  kubectl:
+    - template: template1.yaml.j2
+    - template: template2.yaml.j2
+    - template: template3.yaml.j2
+    - template: innerdir/template1.yaml.j2

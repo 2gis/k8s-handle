@@ -7,7 +7,9 @@ Also k8s-handle supports environments, so you can use same deployment templates 
 
 # Table of contents
 * [Features](#features)
-* [Installation](#installation)
+* [Before you begin](#before-you-begin)
+* [Usage with docker](#usage-with-docker)
+* [Using with CI/CD tools](#using-with-cicd-tools)
 * [Usage](#usage)
 * [Example](#example)
 * [Docs](#docs)
@@ -30,8 +32,7 @@ Also k8s-handle supports environments, so you can use same deployment templates 
      * [Sync mode](#sync-mode)
      * [Strict mode](#strict-mode)
   * [Destroy](#destroy)
-
-
+  
 # Features
 * Easy to use command line interface
 * Configure any variables in one configuration file (config.yaml)
@@ -43,8 +44,77 @@ Also k8s-handle supports environments, so you can use same deployment templates 
 * Easy integration with CI pipeline (gitlab ci for example)
 * Ability to destroy resources (deploy and destroy from git branches, gitlab environments)
 
-# Installation
-TBD
+# Before you begin
+* Setup Kubernetes cluster [https://kubernetes.io/docs/setup/](https://kubernetes.io/docs/setup/), or use any predefined
+* Install `kubectl` if you don't have it [https://kubernetes.io/docs/tasks/tools/install-kubectl/](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+* Create kubeconfig(~/.kube/config) or skip if you already have one
+```bash
+$ cat > ~/.kube/kubernetes.ca.crt << EOF
+> <paste your cluster CA here>
+>EOF
+cat > ~/.kube/config << EOF
+apiVersion: v1
+kind: Config
+preferences: {}
+clusters:
+- cluster:
+    certificate-authority: kubernetes.ca.crt
+    server: < protocol://masterurl:port >
+  name: my-cluster
+contexts:
+- context:
+    cluster: my-cluster
+    namespace: my-namespace
+    user: my-user
+  name: my-context
+current-context: my-context
+users:
+- name: my-user
+  user:
+    token: <your token>
+EOF
+```
+
+# Usage with docker
+```bash
+$ cd $WORKDIR
+$ git clone https://github.com/rvadim/k8s-handle-example.git
+$ cd k8s-handle-example
+$ docker run --rm -v $(pwd):/tmp/ -v "$HOME/.kube:/root/.kube" rvadim/k8s-handle deploy -s staging --use-kubeconfig
+INFO:templating:File "/tmp/k8s-handle/configmap.yaml" successfully generated
+INFO:templating:Trying to generate file from template "secret.yaml.j2" in "/tmp/k8s-handle"
+INFO:templating:File "/tmp/k8s-handle/secret.yaml" successfully generated
+INFO:templating:Trying to generate file from template "deployment.yaml.j2" in "/tmp/k8s-handle"
+INFO:templating:File "/tmp/k8s-handle/deployment.yaml" successfully generated
+INFO:k8s.resource:ConfigMap "k8s-starter-kit-nginx-conf" already exists, replace it
+INFO:k8s.resource:Secret "k8s-starter-kit-secret" already exists, replace it
+INFO:k8s.resource:Deployment "k8s-starter-kit" does not exist, create it
+
+                         _(_)_                          wWWWw   _
+             @@@@       (_)@(_)   vVVVv     _     @@@@  (___) _(_)_
+            @@()@@ wWWWw  (_)\    (___)   _(_)_  @@()@@   Y  (_)@(_)
+             @@@@  (___)     `|/    Y    (_)@(_)  @@@@   \|/   (_)
+              /      Y       \|    \|/    /(_)    \|      |/      |
+           \ |     \ |/       | / \ | /  \|/       |/    \|      \|/
+            \|//    \|///    \|//  \|/// \|///    \|//    |//    \|//
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+# Using with CI/CD tools
+If you using Gitlab CI, TeamCity or something else, you can use docker runner/agent, script will slightly different: 
+```bash
+$ k8s-handle deploy -s staging
+```
+Configure checkout for https://github.com/rvadim/k8s-handle-example.git and specific branch `without-kubeconfig`
+Also you need to setup next env vars:
+* K8S_NAMESPACE
+* K8S_MASTER_URI
+* K8S_CA_BASE64
+* K8S_TOKEN
+
+use image rvadim/k8s-handle:<version or latest>
+
+Notice: If you use Gitlab CI, you can configure [Kubernetes integration](https://docs.gitlab.com/ee/user/project/clusters/#adding-an-existing-kubernetes-cluster) and just use `--use-kubeconfig` flag.
 
 # Usage
 ```bash

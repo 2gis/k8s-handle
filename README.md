@@ -80,7 +80,7 @@ EOF
 $ cd $WORKDIR
 $ git clone https://github.com/rvadim/k8s-handle-example.git
 $ cd k8s-handle-example
-$ docker run --rm -v $(pwd):/tmp/ -v "$HOME/.kube:/root/.kube" rvadim/k8s-handle deploy -s staging --use-kubeconfig
+$ docker run --rm -v $(pwd):/tmp/ -v "$HOME/.kube:/root/.kube" rvadim/k8s-handle k8s-handle deploy -s staging --use-kubeconfig
 INFO:templating:File "/tmp/k8s-handle/configmap.yaml" successfully generated
 INFO:templating:Trying to generate file from template "secret.yaml.j2" in "/tmp/k8s-handle"
 INFO:templating:File "/tmp/k8s-handle/secret.yaml" successfully generated

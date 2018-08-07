@@ -14,4 +14,3 @@ RUN apk --no-cache add git ca-certificates bash openssl make \
 ENV PATH="/opt/k8s-handle:${PATH}"
 
 WORKDIR /tmp/
-ENTRYPOINT ["/usr/local/bin/python", "/opt/k8s-handle/k8s-handle.py"]

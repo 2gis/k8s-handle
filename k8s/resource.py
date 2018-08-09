@@ -1,9 +1,9 @@
 import re
 import logging
-import yaml
 import json
 
 import settings
+from templating import get_template_context
 
 from .mocks import K8sClientMock
 
@@ -58,28 +58,6 @@ class Provisioner:
                       item not in metadata[field] and 'kubernetes.io' not in item]
 
         return result
-
-    @staticmethod
-    def _get_template_context(file_path):
-        with open(file_path) as f:
-            try:
-                context = yaml.load(f.read())
-            except Exception as e:
-                raise RuntimeError('Unable to load yaml file: {}, {}'.format(file_path, e))
-            if context is None:
-                raise RuntimeError('File "{}" is empty'.format(file_path))
-            if 'kind' not in context or context['kind'] is None:
-                raise RuntimeError('Field "kind" not found (or empty) in file "{}"'.format(file_path))
-            if 'metadata' not in context or context['metadata'] is None:
-                raise RuntimeError('Field "metadata" not found (or empty) in file "{}"'.format(file_path))
-            if 'name' not in context['metadata'] or context['metadata']['name'] is None:
-                raise RuntimeError('Field "metadata->name" not found (or empty) in file "{}"'.format(file_path))
-            if 'spec' in context:
-                # INFO: Set replicas = 1 by default for replaces cases in Deployment and StatefulSet
-                if 'replicas' not in context['spec'] or context['spec']['replicas'] is None:
-                    if context['kind'] in ['Deployment', 'StatefulSet']:
-                        context['spec']['replicas'] = 1
-            return context
 
     @staticmethod
     def _port_obj_to_str(port):
@@ -207,7 +185,7 @@ class Provisioner:
         return True
 
     def _deploy(self, file_path):
-        template_body = self._get_template_context(file_path)
+        template_body = get_template_context(file_path)
         kube_client = Adapter(template_body)
 
         if kube_client.api is None:
@@ -266,7 +244,7 @@ class Provisioner:
                                            timeout=settings.CHECK_STATUS_TIMEOUT)
 
     def _destroy(self, file_path):
-        template_body = self._get_template_context(file_path)
+        template_body = get_template_context(file_path)
         kube_client = Adapter(template_body)
         log.info('Trying to delete {} "{}"'.format(template_body['kind'], kube_client.name))
         if kube_client.api is None:

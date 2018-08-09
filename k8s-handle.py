@@ -9,7 +9,8 @@ import templating
 
 from k8s.resource import Provisioner
 from k8s.resource import ProvisioningError
-from kubernetes.client import Configuration
+from k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
+from kubernetes.client import Configuration, VersionApi
 from kubernetes.config import load_kube_config
 from config import InvalidYamlException
 from config import get_client_config
@@ -86,13 +87,18 @@ def main():
             Configuration.set_default(get_client_config(context))
             check_required_vars(context, ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace'])
         p = Provisioner(args.command, args.sync_mode)
+        d = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
         for resource in resources:
+            d.run(resource)
             p.run(resource)
     except templating.TemplateRenderingError as e:
         log.error('Template generation error: {}'.format(e))
         sys.exit(1)
     except InvalidYamlException as e:
         log.error('Incorrect config.yaml: {}'.format(e))
+        sys.exit(1)
+    except DeprecationError as e:
+        log.error('Deprecation warning: {}'.format(e))
         sys.exit(1)
     except RuntimeError as e:
         log.error('RuntimeError: {}'.format(e))

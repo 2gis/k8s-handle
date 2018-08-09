@@ -1,3 +1,4 @@
 jinja2==2.10
 PyYAML==3.12
 kubernetes==6.0.0
+semver==2.8.1

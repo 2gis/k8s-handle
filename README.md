@@ -32,6 +32,7 @@ Also k8s-handle supports environments, so you can use same deployment templates 
      * [Sync mode](#sync-mode)
      * [Strict mode](#strict-mode)
   * [Destroy](#destroy)
+* [Authors](#authors)
   
 # Features
 * Easy to use command line interface
@@ -424,3 +425,8 @@ In some cases you need to destroy early created resources(demo env, deploy from 
 support `destroy` subcommand for you. Just use `destroy` instead of `deploy`. k8s-handle process destroy as deploy, but
 call delete kubernetes api calls instead of create or replace. 
 > Sync mode available for destroy too
+
+# Authors
+
+* [Reyder Vadim](http://github.com/rvadim)
+* [Reyder Irina](https://github.com/shreyderina)

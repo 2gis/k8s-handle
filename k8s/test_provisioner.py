@@ -3,6 +3,7 @@ import settings
 from .resource import Adapter
 from .resource import Provisioner
 from .resource import ProvisioningError
+from templating import get_template_context
 from .mocks import K8sClientMock
 from .mocks import ServiceSpec
 from .mocks import ServiceMetadata
@@ -339,34 +340,34 @@ class TestProvisioner(unittest.TestCase):
 
     def test_get_template_context(self):
         with self.assertRaises(RuntimeError) as context:
-            Provisioner._get_template_context('k8s/fixtures/empty.yaml')
+            get_template_context('k8s/fixtures/empty.yaml')
         self.assertTrue('File "k8s/fixtures/empty.yaml" is empty' in str(context.exception), context.exception)
 
         with self.assertRaises(RuntimeError) as context:
-            Provisioner._get_template_context('k8s/fixtures/nokind.yaml')
+            get_template_context('k8s/fixtures/nokind.yaml')
         self.assertTrue(
             'Field "kind" not found (or empty) in file "k8s/fixtures/nokind.yaml"' in str(context.exception),
             context.exception)
 
         with self.assertRaises(RuntimeError) as context:
-            Provisioner._get_template_context('k8s/fixtures/nometadata.yaml')
+            get_template_context('k8s/fixtures/nometadata.yaml')
         self.assertTrue(
             'Field "metadata" not found (or empty) in file "k8s/fixtures/nometadata.yaml"' in str(context.exception),
             context.exception)
 
         with self.assertRaises(RuntimeError) as context:
-            Provisioner._get_template_context('k8s/fixtures/nometadataname.yaml')
+            get_template_context('k8s/fixtures/nometadataname.yaml')
         self.assertTrue(
             'Field "metadata->name" not found (or empty) in file "k8s/fixtures/nometadataname.yaml"'
             in str(context.exception), context.exception)
 
-        context = Provisioner._get_template_context('k8s/fixtures/valid.yaml')
+        context = get_template_context('k8s/fixtures/valid.yaml')
         self.assertEqual(context.get('kind'), 'Service')
         self.assertEqual(context.get('apiVersion'), 'v1')
         self.assertEqual(context.get('metadata').get('name'), 'my-service')
         self.assertEqual(context.get('spec').get('selector').get('app'), 'my-app')
 
-        context = Provisioner._get_template_context('k8s/fixtures/deployment_wo_replicas.yaml')
+        context = get_template_context('k8s/fixtures/deployment_wo_replicas.yaml')
         self.assertEqual(context.get('spec').get('replicas'), 1)
 
 

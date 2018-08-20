@@ -19,9 +19,9 @@ from config import check_required_vars
 log = logging.getLogger(__name__)
 
 if 'LOG_LEVEL' in sys.argv:
-    logging.basicConfig(level=sys.argv['LOG_LEVEL'])
+    logging.basicConfig(level=sys.argv['LOG_LEVEL'], format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)
 else:
-    logging.basicConfig(level='INFO')
+    logging.basicConfig(level='INFO', format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)
 
 
 parser = argparse.ArgumentParser(description='CLI utility generate k8s resources by templates and apply it to cluster')

@@ -1,6 +1,8 @@
 import os
 
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+LOG_FORMAT = '%(asctime)s %(levelname)s:%(name)s:%(message)s'
+LOG_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 CONFIG_FILE = os.environ.get('CONFIG_FILE', 'config.yaml')
 

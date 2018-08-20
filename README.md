@@ -78,9 +78,9 @@ EOF
 # Usage with docker
 ```bash
 $ cd $WORKDIR
-$ git clone https://github.com/rvadim/k8s-handle-example.git
+$ git clone https://github.com/2gis/k8s-handle-example.git
 $ cd k8s-handle-example
-$ docker run --rm -v $(pwd):/tmp/ -v "$HOME/.kube:/root/.kube" rvadim/k8s-handle k8s-handle deploy -s staging --use-kubeconfig
+$ docker run --rm -v $(pwd):/tmp/ -v "$HOME/.kube:/root/.kube" 2gis/k8s-handle k8s-handle deploy -s staging --use-kubeconfig
 INFO:templating:File "/tmp/k8s-handle/configmap.yaml" successfully generated
 INFO:templating:Trying to generate file from template "secret.yaml.j2" in "/tmp/k8s-handle"
 INFO:templating:File "/tmp/k8s-handle/secret.yaml" successfully generated
@@ -105,14 +105,14 @@ If you using Gitlab CI, TeamCity or something else, you can use docker runner/ag
 ```bash
 $ k8s-handle deploy -s staging
 ```
-Configure checkout for https://github.com/rvadim/k8s-handle-example.git and specific branch `without-kubeconfig`
+Configure checkout for https://github.com/2gis/k8s-handle-example.git and specific branch `without-kubeconfig`
 Also you need to setup next env vars:
 * K8S_NAMESPACE
 * K8S_MASTER_URI
 * K8S_CA_BASE64
 * K8S_TOKEN
 
-use image rvadim/k8s-handle:<version or latest>
+use image 2gis/k8s-handle:<version or latest>
 
 Notice: If you use Gitlab CI, you can configure [Kubernetes integration](https://docs.gitlab.com/ee/user/project/clusters/#adding-an-existing-kubernetes-cluster) and just use `--use-kubeconfig` flag.
 
@@ -164,10 +164,10 @@ k8s-starter-kit   3         3         3            3           7m
 ```
 
 # Example
-You can start by example https://github.com/rvadim/k8s-handle-example. There are nginx with index.html and all needed kubernetes resources for deploy them.
+You can start by example https://github.com/2gis/k8s-handle-example. There are nginx with index.html and all needed kubernetes resources for deploy them.
 ```bash
 $ cd $WORKDIR
-$ git clone https://github.com/rvadim/k8s-handle-example.git
+$ git clone https://github.com/2gis/k8s-handle-example.git
 $ cd k8s-handle-example
 $ IMAGE_VERSION=latest k8s-handle-os deploy -s staging --use-kubeconfig --sync-mode
 INFO:__main__:Using default namespace k8s-handle-test
@@ -333,7 +333,7 @@ Use Gitlab CI integration with Kubernetes (https://docs.gitlab.com/ee/user/proje
 .gitlab-ci.yaml:
 ```yaml
 deploy:
-  image: rvadim/k8s-handle:latest # TODO
+  image: 2gis/k8s-handle:latest
   script:
     - k8s-handle deploy --section <section_name> --use-kubeconfig
 ```
@@ -358,7 +358,7 @@ production:
 Now just run proper gitlab job(without --use-kubeconfig option):
 ```yaml
 deploy:
-  image: rvadim/k8s-handle:latest
+  image: 2gis/k8s-handle:latest
   script:
     - k8s-handle deploy --section <section_name>
 ```

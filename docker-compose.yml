@@ -4,4 +4,4 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: rvadim/k8s-handle:${TAG}
+    image: 2gis/k8s-handle:${TAG}

@@ -381,6 +381,8 @@ class Adapter:
             return client.StorageV1Api()
         if api_version == 'apps/v1':
             return client.AppsV1Api()
+        if api_version == 'autoscaling/v1':
+            return client.AutoscalingV1Api()
         if api_version == 'test/test':
             return K8sClientMock(self.name)
 
@@ -389,7 +391,7 @@ class Adapter:
         if kind not in ['ConfigMap', 'CronJob', 'DaemonSet', 'Deployment', 'Endpoints',
                         'Ingress', 'Job', 'Namespace', 'PodDisruptionBudget', 'ResourceQuota',
                         'Secret', 'Service', 'ServiceAccount', 'StatefulSet', 'StorageClass',
-                        'PersistentVolume', 'PersistentVolumeClaim', ]:
+                        'PersistentVolume', 'PersistentVolumeClaim', 'HorizontalPodAutoscaler']:
             raise RuntimeError('Unknown kind "{}" in generated file'.format(kind))
 
         return _split_str_by_capital_letters(kind)

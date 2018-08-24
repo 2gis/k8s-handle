@@ -27,9 +27,17 @@ subparsers = parser.add_subparsers()
 deploy_parser = subparsers.add_parser('deploy', help='Sub command for deploy')
 deploy_parser.add_argument('-s', '--section', required=True, type=str, help='Section to deploy from config file')
 deploy_parser.add_argument('-c', '--config', required=False, help='Config file, default: config.yaml')
-deploy_parser.add_argument('--dry-run', required=False, action='store_true', help='Don\'t run kubectl commands')
-deploy_parser.add_argument('--sync-mode', action='store_true', required=False, default=False,
-                           help='Turn on sync mode and wait deployment ending')
+if settings.LEGACY_MODE:
+    deploy_parser.add_argument('--dry-run', required=False,
+                               help='Don\'t call kubernetes API, just process templates')
+    deploy_parser.add_argument('--sync-mode', required=False, default=False,
+                               help='Turn on sync mode and wait deployment ending')
+else:
+    deploy_parser.add_argument('--dry-run', required=False, action='store_true',
+                               help='Don\'t call kubernetes API, just process templates')
+    deploy_parser.add_argument('--sync-mode', action='store_true', required=False, default=False,
+                               help='Turn on sync mode and wait deployment ending')
+
 deploy_parser.add_argument('--tries', type=int, required=False, default=360,
                            help='Count of tries to check deployment status')
 deploy_parser.add_argument('--retry-delay', type=int, required=False, default=5, help='Sleep between tries in seconds')
@@ -42,10 +50,18 @@ deploy_parser.set_defaults(command='deploy')
 destroy_parser = subparsers.add_parser('destroy', help='Sub command for destroy app')
 destroy_parser.add_argument('-s', '--section', required=True, type=str, help='Section to destroy from config file')
 destroy_parser.add_argument('-c', '--config', type=str, required=False, help='Config file, default: config.yaml')
-destroy_parser.add_argument('--dry-run', action='store_true', required=False, default=False,
-                            help='Don\'t run kubectl commands')
-destroy_parser.add_argument('--sync-mode', action='store_true', required=False, default=False,
-                            help='Turn on sync mode and wait destruction ending')
+
+if settings.LEGACY_MODE:
+    destroy_parser.add_argument('--dry-run', required=False, default=False,
+                                help='Don\'t call kubernetes API, just process templates')
+    destroy_parser.add_argument('--sync-mode', required=False, default=False,
+                                help='Turn on sync mode and wait destruction ending')
+else:
+    destroy_parser.add_argument('--dry-run', action='store_true', required=False, default=False,
+                                help='Don\'t call kubernetes API, just process templates')
+    destroy_parser.add_argument('--sync-mode', action='store_true', required=False, default=False,
+                                help='Turn on sync mode and wait destruction ending')
+
 destroy_parser.add_argument('--tries', type=int, required=False, default=360,
                             help='Count of tries to check destruction status')
 destroy_parser.add_argument('--retry-delay', type=int, required=False, default=5, help='Sleep between tries in seconds')

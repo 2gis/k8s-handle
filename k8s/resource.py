@@ -428,7 +428,7 @@ class Adapter:
 
     def replace(self, ports=None):
         try:
-            if self.kind in ['service', ]:
+            if self.kind in ['service', 'service_account', ]:
                 if ports is not None:
                     self.body['spec']['ports'] = ports
                 return getattr(self.api, 'patch_namespaced_{}'.format(self.kind))(

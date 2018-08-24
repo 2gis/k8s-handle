@@ -28,7 +28,7 @@ class ApiDeprecationChecker:
         }
 
     def _is_server_version_greater(self, checked_version):
-        return True if semver.compare(self.server_version, checked_version) >= 0 else False
+        return semver.compare(self.server_version, checked_version) >= 0
 
     def _is_deprecated(self, api_version, kind):
         message = """

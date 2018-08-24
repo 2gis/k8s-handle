@@ -14,12 +14,9 @@ from kubernetes.client import Configuration, VersionApi
 from kubernetes.config import load_kube_config
 from config import InvalidYamlException
 from config import get_client_config
-from config import check_required_vars
 
 log = logging.getLogger(__name__)
-
 logging.basicConfig(level=settings.LOG_LEVEL, format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)
-
 
 parser = argparse.ArgumentParser(description='CLI utility generate k8s resources by templates and apply it to cluster')
 subparsers = parser.add_subparsers()
@@ -56,38 +53,66 @@ destroy_parser.set_defaults(command='destroy')
 
 def main():
     args = parser.parse_args()
+
     if 'config' in args and args.config:
         settings.CONFIG_FILE = args.config
+
     if 'tries' in args:
         settings.CHECK_STATUS_TRIES = args.tries
         settings.CHECK_DAEMONSET_STATUS_TRIES = args.tries
+
     if 'retry_delay' in args:
         settings.CHECK_STATUS_TIMEOUT = args.retry_delay
         settings.CHECK_DAEMONSET_STATUS_TIMEOUT = args.retry_delay
+
     if 'strict' in args:
         settings.GET_ENVIRON_STRICT = args.strict
+
     if 'command' not in args:
         parser.print_help()
         sys.exit(1)
+
     try:
         context = config.load_context_section(args.section)
-        log.info('Using default namespace {}'.format(context.get('k8s_namespace')))
-        render = templating.Renderer(settings.TEMPLATES_DIR)
-        resources = render.generate_by_context(context)
+        log.info('Using namespace {}'.format(context.get('k8s_namespace')))
+        renderer = templating.Renderer(settings.TEMPLATES_DIR)
+        resources = renderer.generate_by_context(context)
         # INFO rvadim: https://github.com/kubernetes-client/python/issues/430#issuecomment-359483997
 
         if args.dry_run:
             return
+
         if 'use_kubeconfig' in args and args.use_kubeconfig:
             load_kube_config()
         else:
             Configuration.set_default(get_client_config(context))
-            check_required_vars(context, ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace'])
-        p = Provisioner(args.command, args.sync_mode)
-        d = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
+
+            # check that required options present
+            missing_vars = []
+
+            for v in ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace']:
+                if v in context and context[v] not in ['', None]:
+                    continue
+
+                missing_vars.append(v)
+
+            if missing_vars:
+                raise RuntimeError(
+                    'Variables "{}" not found (or empty) in config file "{}". '
+                    'Please, set all required variables: {}.'.format(
+                        ', '.join(missing_vars),
+                        settings.CONFIG_FILE,
+                        ', '.join(['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace'])
+                    )
+                )
+
+        provisioner = Provisioner(args.command, args.sync_mode)
+        deprecation_checker = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
+
         for resource in resources:
-            d.run(resource)
-            p.run(resource)
+            deprecation_checker.run(resource)
+            provisioner.run(resource)
+
     except templating.TemplateRenderingError as e:
         log.error('Template generation error: {}'.format(e))
         sys.exit(1)
@@ -102,6 +127,7 @@ def main():
         sys.exit(1)
     except ProvisioningError:
         sys.exit(1)
+
     print('''
                          _(_)_                          wWWWw   _
              @@@@       (_)@(_)   vVVVv     _     @@@@  (___) _(_)_

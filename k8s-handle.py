@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 
-import sys
-import logging
-import config
 import argparse
-import settings
-import templating
+import logging
+import sys
 
-from k8s.resource import Provisioner
-from k8s.resource import ProvisioningError
-from k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
 from kubernetes.client import Configuration, VersionApi
 from kubernetes.config import load_kube_config
+
+import config
+import settings
+import templating
 from config import InvalidYamlException
 from config import get_client_config
+from k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
+from k8s.resource import Provisioner
+from k8s.resource import ProvisioningError
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)
@@ -73,28 +74,28 @@ def main():
         sys.exit(1)
 
     try:
-        context = config.load_context_section(args.section)
-        log.info('Using namespace {}'.format(context.get('k8s_namespace')))
+        context = config.context_load(args.section)
+        settings.K8S_NAMESPACE = context.get('k8s_namespace')
+        log.info('Using namespace {}'.format(settings.K8S_NAMESPACE))
         renderer = templating.Renderer(settings.TEMPLATES_DIR)
         resources = renderer.generate_by_context(context)
-        # INFO rvadim: https://github.com/kubernetes-client/python/issues/430#issuecomment-359483997
 
+        # INFO rvadim: https://github.com/kubernetes-client/python/issues/430#issuecomment-359483997
         if args.dry_run:
             return
 
         if 'use_kubeconfig' in args and args.use_kubeconfig:
             load_kube_config()
-        else:
-            Configuration.set_default(get_client_config(context))
 
-            # check that required options present
+        else:
+            # check that required parameters present
             missing_vars = []
 
-            for v in ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace']:
-                if v in context and context[v] not in ['', None]:
+            for key in ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace']:
+                if key in context and context[key] not in ['', None]:
                     continue
 
-                missing_vars.append(v)
+                missing_vars.append(key)
 
             if missing_vars:
                 raise RuntimeError(
@@ -106,11 +107,16 @@ def main():
                     )
                 )
 
-        provisioner = Provisioner(args.command, args.sync_mode)
+            Configuration.set_default(get_client_config(context))
+
         deprecation_checker = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
 
         for resource in resources:
             deprecation_checker.run(resource)
+
+        provisioner = Provisioner(args.command, args.sync_mode)
+
+        for resource in resources:
             provisioner.run(resource)
 
     except templating.TemplateRenderingError as e:
@@ -128,7 +134,8 @@ def main():
     except ProvisioningError:
         sys.exit(1)
 
-    print('''
+    print(
+        '''
                          _(_)_                          wWWWw   _
              @@@@       (_)@(_)   vVVVv     _     @@@@  (___) _(_)_
             @@()@@ wWWWw  (_)\    (___)   _(_)_  @@()@@   Y  (_)@(_)
@@ -136,7 +143,8 @@ def main():
               /      Y       \|    \|/    /(_)    \|      |/      |
            \ |     \ |/       | / \ | /  \|/       |/    \|      \|/
             \|//    \|///    \|//  \|/// \|///    \|//    |//    \|//
-       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^''')
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'''
+    )
 
 
 if __name__ == '__main__':

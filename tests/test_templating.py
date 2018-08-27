@@ -32,7 +32,7 @@ class TestTemplating(unittest.TestCase):
 
     def test_generate_templates(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
-        context = config.load_context_section('test_dirs')
+        context = config.context_load('test_dirs')
         r.generate_by_context(context)
         file_path_1 = '{}/template1.yaml'.format(settings.TEMP_DIR)
         file_path_2 = '{}/template2.yaml'.format(settings.TEMP_DIR)
@@ -57,18 +57,18 @@ class TestTemplating(unittest.TestCase):
     def test_no_templates_in_kubectl(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
         with self.assertRaises(RuntimeError) as context:
-            r.generate_by_context(config.load_context_section('no_templates'))
+            r.generate_by_context(config.context_load('no_templates'))
         self.assertTrue('Templates section doesn\'t have any template items' in str(context.exception))
 
     def test_render_not_existent_template(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
         with self.assertRaises(TemplateRenderingError) as context:
-            r.generate_by_context(config.load_context_section('not_existent_template'))
+            r.generate_by_context(config.context_load('not_existent_template'))
         self.assertTrue('doesnotexist.yaml.j2' in str(context.exception), context.exception)
 
     def test_generate_templates_with_kubectl_section(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
-        context = config.load_context_section('section_with_kubectl')
+        context = config.context_load('section_with_kubectl')
         r.generate_by_context(context)
         file_path_1 = '{}/template1.yaml'.format(settings.TEMP_DIR)
         file_path_2 = '{}/template2.yaml'.format(settings.TEMP_DIR)
@@ -93,6 +93,6 @@ class TestTemplating(unittest.TestCase):
     def test_io_2709(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
         with self.assertRaises(TemplateRenderingError) as context:
-            c = config.load_context_section('io_2709')
+            c = config.context_load('io_2709')
             r.generate_by_context(c)
         self.assertTrue('due to: \'undefined_variable\' is undefined' in str(context.exception))

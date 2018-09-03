@@ -21,7 +21,8 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)
 
 parser = argparse.ArgumentParser(description='CLI utility generate k8s resources by templates and apply it to cluster')
-subparsers = parser.add_subparsers()
+subparsers = parser.add_subparsers(dest="command")
+subparsers.required = True
 
 deploy_parser = subparsers.add_parser('deploy', help='Sub command for deploy')
 deploy_parser.add_argument('-s', '--section', required=True, type=str, help='Section to deploy from config file')
@@ -66,13 +67,8 @@ def main():
     if 'strict' in args:
         settings.GET_ENVIRON_STRICT = args.strict
 
-    if 'command' not in args:
-        parser.print_help()
-        sys.exit(1)
-
     try:
         context = config.load_context_section(args.section)
-        log.info('Using default namespace {}'.format(context.get('k8s_namespace')))
         render = templating.Renderer(settings.TEMPLATES_DIR)
         resources = render.generate_by_context(context)
         # INFO rvadim: https://github.com/kubernetes-client/python/issues/430#issuecomment-359483997
@@ -86,11 +82,15 @@ def main():
             Configuration.set_default(get_client_config(context))
             check_required_vars(context, ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace'])
 
+        log.info('Using namespace {}'.format(context.get('k8s_namespace')))
+        settings.K8S_NAMESPACE = context.get('k8s_namespace')
         p = Provisioner(args.command, args.sync_mode)
         d = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
 
         for resource in resources:
             d.run(resource)
+
+        for resource in resources:
             p.run(resource)
 
     except templating.TemplateRenderingError as e:

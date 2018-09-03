@@ -6,6 +6,7 @@ import numbers
 import settings
 import tempfile
 import logging
+import copy
 
 from kubernetes import client
 from templating import b64decode
@@ -61,15 +62,14 @@ def _process_variable(variable):
 
 
 def _merge_options(base, rewrites):
+    result = copy.deepcopy(base)
     for key, value in rewrites.items():
-        if isinstance(value, dict):
-            # get node or create one
-            node = base.setdefault(key, {})
-            _merge_options(node, value)
+        if isinstance(value, dict) and isinstance(result.get(key), dict):
+            result[key] = _merge_options(result[key], value)
         else:
-            base[key] = value
+            result[key] = value
 
-    return base
+    return result
 
 
 def _update_context_recursively(context):
@@ -109,9 +109,6 @@ def load_context_section(section):
     # delete all sections except common and used section
     context = {key: context[key] for key in ['common', section]}
     context = _update_context_recursively(context)
-
-    settings.K8S_NAMESPACE = context[settings.COMMON_SECTION_NAME].get('k8s_namespace')
-
     if section and section in context:
         context = _merge_options(context[settings.COMMON_SECTION_NAME], context[section])
 

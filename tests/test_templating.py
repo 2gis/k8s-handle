@@ -11,10 +11,15 @@ class TestTemplating(unittest.TestCase):
     def setUp(self):
         settings.CONFIG_FILE = 'tests/fixtures/config.yaml'
         settings.TEMPLATES_DIR = 'templates/tests'
+        os.environ['CUSTOM_ENV'] = 'My value'
+        os.environ['K8S_CONFIG_DIR'] = '/tmp/kube/'
 
     def tearDown(self):
         if os.path.exists(settings.TEMP_DIR):
             shutil.rmtree(settings.TEMP_DIR)
+
+        os.environ.pop('CUSTOM_ENV')
+        os.environ.pop('K8S_CONFIG_DIR')
 
     def test_renderer_init(self):
         r = templating.Renderer()

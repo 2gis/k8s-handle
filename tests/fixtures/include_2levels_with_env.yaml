@@ -1,0 +1,2 @@
+---
+included_file: "{{ file='tests/fixtures/include_with_env.yaml' }}"

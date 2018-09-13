@@ -1,0 +1,15 @@
+common:
+  k8s_master_uri: https://localhost:5000
+  k8s_token: token
+  k8s_ca_base64: ca
+  k8s_namespace: namespace
+
+section-1:
+  var: "{{ file='tests/fixtures/include_2levels_with_env.yaml' }}"
+  kubectl:
+    - template: template1.yaml.j2
+
+section-2:
+  var: "{{ file='tests/fixtures/include_with_env.yaml' }}"
+  kubectl:
+    - template: template2.yaml.j2

@@ -1,0 +1,2 @@
+---
+included_env: "{{ env='INC_ENV' }}"

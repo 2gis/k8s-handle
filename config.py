@@ -2,7 +2,6 @@ import os
 import re
 import yaml
 import atexit
-import numbers
 import settings
 import tempfile
 import logging
@@ -72,14 +71,15 @@ def _merge_options(base, rewrites):
     return result
 
 
-def _update_context_recursively(context):
+def _update_context_recursively(context, depth=0):
+    if depth > settings.MAX_CONFIG_INCLUDE_DEPTH:
+        raise RuntimeError('Max include depth for config has reached')
+
     if isinstance(context, dict):
         output = {}
         for key, value in context.items():
             if isinstance(value, str):
-                output[key] = _process_variable(value)
-            elif isinstance(value, numbers.Number):
-                output[key] = value
+                output[key] = _update_context_recursively(_process_variable(value), depth + 1)
             else:
                 output[key] = _update_context_recursively(value)
         return output
@@ -87,9 +87,7 @@ def _update_context_recursively(context):
         output = []
         for value in context:
             if isinstance(value, str):
-                output.append(_process_variable(value))
-            elif isinstance(value, numbers.Number):
-                output.append(value)
+                output.append(_update_context_recursively(_process_variable(value), depth + 1))
             else:
                 output.append(_update_context_recursively(value))
         return output

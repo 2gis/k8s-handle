@@ -155,6 +155,30 @@ class TestContextGeneration(unittest.TestCase):
         settings.GET_ENVIRON_STRICT = False
         self.assertTrue('Environment variable "SECTION2" is not set' in str(context.exception))
 
+    def test_env_var_in_include_dont_set(self):
+        settings.CONFIG_FILE = 'tests/fixtures/config_with_include_and_env_vars.yaml'
+        settings.GET_ENVIRON_STRICT = True
+        with self.assertRaises(RuntimeError):
+            config.load_context_section('section-2')
+
+        settings.GET_ENVIRON_STRICT = False
+
+    def test_env_var_in_include_2_levels_dont_set(self):
+        settings.CONFIG_FILE = 'tests/fixtures/config_with_include_and_env_vars.yaml'
+        settings.GET_ENVIRON_STRICT = True
+        with self.assertRaises(RuntimeError):
+            config.load_context_section('section-1')
+
+        settings.GET_ENVIRON_STRICT = False
+
+    def test_max_recursion_depth(self):
+        settings.CONFIG_FILE = 'tests/fixtures/config_with_include_and_env_vars.yaml'
+        settings.MAX_CONFIG_INCLUDE_DEPTH = 1
+        with self.assertRaises(RuntimeError):
+            config.load_context_section('section-1')
+
+        settings.MAX_CONFIG_INCLUDE_DEPTH = 5
+
     def test_get_client_config(self):
         context = {
             'k8s_master_uri': 'http://test.test/',

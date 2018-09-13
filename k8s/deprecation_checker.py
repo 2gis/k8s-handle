@@ -17,7 +17,7 @@ class ApiDeprecationChecker:
         self.deprecated_versions = {
             "extensions/v1beta1": {
                 "since": "1.8.0",
-                "until": "1.10.0",
+                "until": "1.11.0",
                 "resources": [
                     "Deployment",
                     "DaemonSet",

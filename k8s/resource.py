@@ -37,9 +37,9 @@ class Provisioner:
         self.sync_mode = sync_mode
 
     @staticmethod
-    def _replicas_are_equal(replicas):
+    def _replicas_count_are_greater_or_equal(replicas):
         replicas = [0 if r is None else r for r in replicas]  # replace all None to 0
-        return all(r == replicas[0] for r in replicas)
+        return all(r >= replicas[0] for r in replicas)
 
     @staticmethod
     def _ports_are_equal(old_port, new_port):
@@ -276,7 +276,7 @@ class Provisioner:
 
             log.info('desiredReplicas = {}, updatedReplicas = {}, availableReplicas = {}'.
                      format(replicas[0], replicas[4], replicas[2]))
-            if self._replicas_are_equal(replicas) and status.unavailable_replicas is None:
+            if self._replicas_count_are_greater_or_equal(replicas) and status.unavailable_replicas is None:
                 log.info('Deployment completed on {} attempt'.format(i + 1))
                 return
             else:
@@ -297,7 +297,7 @@ class Provisioner:
             if current_revision == update_revision:
                 log.info('desiredReplicas = {}, updatedReplicas = {}, availableReplicas = {}'.
                          format(replicas[0], replicas[1], replicas[2]))
-                if self._replicas_are_equal(replicas):
+                if self._replicas_count_are_greater_or_equal(replicas):
                     log.info('StatefulSet completed on {} attempt'.format(i))
                     return
             else:
@@ -314,7 +314,7 @@ class Provisioner:
                         status.number_ready, status.updated_number_scheduled]
             log.info('desiredNodes = {}, availableNodes = {}, readyNodes = {}, updatedNodes = {}'.
                      format(replicas[0], replicas[1], replicas[2], replicas[3]))
-            if self._replicas_are_equal(replicas) and status.number_unavailable is None:
+            if self._replicas_count_are_greater_or_equal(replicas) and status.number_unavailable is None:
                 log.info('DaemonSet completed on {} attempt'.format(i))
                 return
             else:

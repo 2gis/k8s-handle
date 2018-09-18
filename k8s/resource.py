@@ -1,21 +1,17 @@
-import re
-import logging
 import json
+import logging
+import re
+from time import sleep
+
+from kubernetes import client
+from kubernetes.client.models.v1_label_selector import V1LabelSelector
+from kubernetes.client.models.v1_label_selector_requirement import V1LabelSelectorRequirement
+from kubernetes.client.models.v1_resource_requirements import V1ResourceRequirements
+from kubernetes.client.rest import ApiException
 
 import settings
 from templating import get_template_context
-
 from .mocks import K8sClientMock
-
-from kubernetes import client
-
-from kubernetes.client.rest import ApiException
-
-from kubernetes.client.models.v1_resource_requirements import V1ResourceRequirements
-from kubernetes.client.models.v1_label_selector import V1LabelSelector
-from kubernetes.client.models.v1_label_selector_requirement import V1LabelSelectorRequirement
-
-from time import sleep
 
 log = logging.getLogger(__name__)
 
@@ -32,9 +28,10 @@ def _split_str_by_capital_letters(item):
 
 
 class Provisioner:
-    def __init__(self, command, sync_mode):
+    def __init__(self, command, sync_mode, show_logs):
         self.command = command
-        self.sync_mode = sync_mode
+        self.sync_mode = False if show_logs else sync_mode
+        self.show_logs = show_logs
 
     @staticmethod
     def _replicas_are_equal(replicas):
@@ -243,6 +240,29 @@ class Provisioner:
                                            tries=settings.CHECK_STATUS_TRIES,
                                            timeout=settings.CHECK_STATUS_TIMEOUT)
 
+        if template_body['kind'] == 'Job' and self.show_logs:
+            log.info("Got into section")
+            pod_name, pod_containers = self._get_pod_name_and_containers_by_selector(
+                kube_client,
+                template_body['metadata']['name'],
+                tries=settings.CHECK_STATUS_TRIES,
+                timeout=settings.CHECK_STATUS_TIMEOUT)
+
+            log.info("Got pod name and pod containers {} {}".format(pod_name, pod_containers))
+
+            if not pod_name:
+                log.error('Pod not found for showing logs')
+                exit(1)
+
+            if self._wait_pod_running(
+                    kube_client,
+                    pod_name,
+                    tries=settings.CHECK_STATUS_TRIES,
+                    timeout=settings.CHECK_STATUS_TIMEOUT):
+
+                for pod_container in pod_containers:
+                    log.info('\n{}'.format(kube_client.read_pod_logs(pod_name, pod_container)))
+
     def _destroy(self, file_path):
         template_body = get_template_context(file_path)
         kube_client = Adapter(template_body)
@@ -265,6 +285,27 @@ class Provisioner:
                                                 timeout=settings.CHECK_STATUS_TIMEOUT)
 
             log.info('{} "{}" deleted'.format(template_body['kind'], kube_client.name))
+
+    @staticmethod
+    def _get_pod_name_and_containers_by_selector(kube_client, selector, tries, timeout):
+        for i in range(0, tries):
+            pod = kube_client.get_pods_by_selector(selector)
+
+            if len(pod.items) == 1:
+                log.info('Found pod "{}"'.format(pod.items[0].metadata.name))
+                containers = [container.name for container in pod.items[0].spec.containers]
+                return pod.items[0].metadata.name, containers
+            else:
+                if len(pod.items) == 0:
+                    log.warning('No pods found by job-name={}, next attempt in {} sec.'.format(selector, timeout))
+                else:
+                    names = [pod.metadata.name for pod in pod.items]
+                    log.warning('More than one pod found by job-name={}: {}, '
+                                'next attempt in {} sec.'.format(selector, names, timeout))
+            sleep(timeout)
+
+        log.error('Problems with getting pod by selector job-name={} for {} tries'.format(selector, tries))
+        return '', []
 
     def _wait_deployment_complete(self, kube_client, tries, timeout):
         for i in range(0, tries):
@@ -333,6 +374,19 @@ class Provisioner:
                 log.info('Job not completed on {} attempt, next attempt in {} sec.'.format(i, timeout))
 
         raise RuntimeError('Job not completed for {} tries'.format(tries))
+
+    @staticmethod
+    def _wait_pod_running(kube_client, pod_name, tries, timeout):
+        for i in range(0, tries):
+            status = kube_client.read_pod_status(pod_name)
+
+            log.info('Pod "{}" status: {}'.format(pod_name, status.status.phase))
+            if status.status.phase in ['Succeeded', 'Failed', 'Unknown']:
+                return True
+            sleep(timeout)
+
+        log.error('Pod "{}" not completed for {} tries'.format(pod_name, tries))
+        return False
 
     @staticmethod
     def _wait_destruction_complete(kube_client, kind, tries, timeout):
@@ -411,10 +465,47 @@ class Adapter:
 
         return response
 
+    def get_pods_by_selector(self, label_selector):
+        try:
+            if not isinstance(self.api, K8sClientMock):
+                self.api = client.CoreV1Api()
+
+            return self.api.list_namespaced_pod(
+                namespace=self.namespace, label_selector='job-name={}'.format(label_selector))
+
+        except ApiException as e:
+            log.error('Exception when calling CoreV1Api->list_namespaced_pod: {}', e)
+            raise e
+
+    def read_pod_status(self, name):
+        try:
+            if not isinstance(self.api, K8sClientMock):
+                self.api = client.CoreV1Api()
+
+            return self.api.read_namespaced_pod_status(name, namespace=self.namespace)
+        except ApiException as e:
+            log.error('Exception when calling CoreV1Api->read_namespaced_pod_status: {}', e)
+            raise e
+
+    def read_pod_logs(self, name, container):
+        log.info('Read logs for pod "{}", container "{}"'.format(name, container))
+        try:
+            if not isinstance(self.api, K8sClientMock):
+                self.api = client.CoreV1Api()
+            if settings.COUNT_LOG_LINES:
+                return self.api.read_namespaced_pod_log(name, namespace=self.namespace, timestamps=True,
+                                                        tail_lines=settings.COUNT_LOG_LINES, container=container)
+            return self.api.read_namespaced_pod_log(name, namespace=self.namespace, timestamps=True,
+                                                    container=container)
+        except ApiException as e:
+            log.error('Exception when calling CoreV1Api->read_namespaced_pod_log: {}', e)
+            raise e
+
     def create(self):
         try:
             if self.kind in ['namespace', 'storage_class', 'persistent_volume', ]:
                 return getattr(self.api, 'create_{}'.format(self.kind))(body=self.body)
+
             return getattr(self.api, 'create_namespaced_{}'.format(self.kind))(
                 body=self.body, namespace=self.namespace)
         except ApiException as e:
@@ -467,5 +558,5 @@ class Adapter:
     def _add_indent(json_str):
         try:
             return json.dumps(json.loads(json_str), indent=4)
-        except:     # NOQA
+        except:  # NOQA
             return json_str

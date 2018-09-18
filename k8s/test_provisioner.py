@@ -1,13 +1,14 @@
 import unittest
+
 import settings
+from templating import get_template_context
+from .mocks import K8sClientMock
+from .mocks import ServiceMetadata
+from .mocks import ServicePort
+from .mocks import ServiceSpec
 from .resource import Adapter
 from .resource import Provisioner
 from .resource import ProvisioningError
-from templating import get_template_context
-from .mocks import K8sClientMock
-from .mocks import ServiceSpec
-from .mocks import ServiceMetadata
-from .mocks import ServicePort
 
 
 class TestProvisioner(unittest.TestCase):
@@ -19,44 +20,44 @@ class TestProvisioner(unittest.TestCase):
             api=K8sClientMock('test1'),
             spec={'kind': 'Deployment', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('deploy', False)._wait_deployment_complete(client, tries=1, timeout=0)
+            Provisioner('deploy', False, None)._wait_deployment_complete(client, tries=1, timeout=0)
         self.assertTrue('Deployment not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_deployment_wait_complete(self):
         client = Adapter(
             api=K8sClientMock('test2'),
             spec={'kind': 'Deployment', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
-        Provisioner('deploy', True)._wait_deployment_complete(client, tries=1, timeout=0)
+        Provisioner('deploy', False, None)._wait_deployment_complete(client, tries=1, timeout=0)
 
     def test_statefulset_wait_complete_fail(self):
         client = Adapter(api=K8sClientMock('test1'),
                          spec={'kind': 'StatefulSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('deploy', False)._wait_statefulset_complete(client, tries=1, timeout=0)
+            Provisioner('deploy', False, None)._wait_statefulset_complete(client, tries=1, timeout=0)
         self.assertTrue('StatefulSet not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_statefulset_wait_complete(self):
         client = Adapter(api=K8sClientMock('test2'),
                          spec={'kind': 'StatefulSet', 'metadata': {'name': ''}, 'spec': {'replicas': 3}})
-        Provisioner('deploy', False)._wait_statefulset_complete(client, tries=1, timeout=0)
+        Provisioner('deploy', False, None)._wait_statefulset_complete(client, tries=1, timeout=0)
 
     def test_daemonset_wait_complete_fail(self):
         client = Adapter(api=K8sClientMock('test1'),
                          spec={'kind': 'DaemonSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('deploy', False)._wait_daemonset_complete(client, tries=1, timeout=0)
+            Provisioner('deploy', False, None)._wait_daemonset_complete(client, tries=1, timeout=0)
         self.assertTrue('DaemonSet not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_daemonset_wait_complete(self):
         client = Adapter(api=K8sClientMock('test2'),
                          spec={'kind': 'DaemonSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
-        Provisioner('deploy', False)._wait_daemonset_complete(client, tries=1, timeout=0)
+        Provisioner('deploy', False, None)._wait_daemonset_complete(client, tries=1, timeout=0)
 
     def test_job_wait_complete_fail(self):
         client = Adapter(api=K8sClientMock('test1'),
                          spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('deploy', False)._wait_job_complete(client, tries=1, timeout=0)
+            Provisioner('deploy', False, None)._wait_job_complete(client, tries=1, timeout=0)
 
         self.assertTrue('Job running failed' in str(context.exception))
 
@@ -64,13 +65,13 @@ class TestProvisioner(unittest.TestCase):
         client = Adapter(api=K8sClientMock('test2'),
                          spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('deploy', False)._wait_job_complete(client, tries=1, timeout=0)
+            Provisioner('deploy', False, None)._wait_job_complete(client, tries=1, timeout=0)
         self.assertTrue('Job not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_job_wait_complete(self):
         client = Adapter(api=K8sClientMock('test3'),
                          spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
-        Provisioner('deploy', False)._wait_job_complete(client, tries=1, timeout=0)
+        Provisioner('deploy', False, None)._wait_job_complete(client, tries=1, timeout=0)
 
     def test_ns_from_template(self):
         client = Adapter(api=K8sClientMock('test'),
@@ -89,28 +90,28 @@ class TestProvisioner(unittest.TestCase):
             api=K8sClientMock('test1'),
             spec={'kind': 'Deployment', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('destroy', False)._wait_destruction_complete(client, 'Deployment', tries=1, timeout=0)
+            Provisioner('destroy', False, None)._wait_destruction_complete(client, 'Deployment', tries=1, timeout=0)
         self.assertTrue('Deployment destruction not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_deployment_destruction_wait_success(self):
         client = Adapter(
             api=K8sClientMock('404'),
             spec={'kind': 'Deployment', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
-        Provisioner('destroy', False)._wait_destruction_complete(client, 'Deployment', tries=1, timeout=0)
+        Provisioner('destroy', False, None)._wait_destruction_complete(client, 'Deployment', tries=1, timeout=0)
 
     def test_job_destruction_wait_fail(self):
         client = Adapter(
             api=K8sClientMock('test1'),
             spec={'kind': 'Job', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('destroy', True)._wait_destruction_complete(client, 'Job', tries=1, timeout=0)
+            Provisioner('deploy', True, None)._wait_destruction_complete(client, 'Job', tries=1, timeout=0)
         self.assertTrue('Job destruction not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_job_destruction_wait_success(self):
         client = Adapter(
             api=K8sClientMock('404'),
             spec={'kind': 'Job', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
-        Provisioner('destroy', False)._wait_destruction_complete(client, 'Job', tries=1, timeout=0)
+        Provisioner('destroy', False, None)._wait_destruction_complete(client, 'Job', tries=1, timeout=0)
 
     def test_missing_annotations_and_labels(self):
         annotations = {
@@ -132,7 +133,7 @@ class TestProvisioner(unittest.TestCase):
             'labels': {'label1': 'value1', 'label2': 'value2'}
         }
 
-        missing_annotations, missing_labels = Provisioner('', False)._get_missing_annotations_and_labels(
+        missing_annotations, missing_labels = Provisioner('', False, None)._get_missing_annotations_and_labels(
             old_metadata, new_metadata)
 
         self.assertEqual(len(missing_annotations), 1)
@@ -151,7 +152,7 @@ class TestProvisioner(unittest.TestCase):
             'labels': {'label1': 'value1', 'label2': 'value2'}
         }
 
-        missing_annotations, missing_labels = Provisioner('', False)._get_missing_annotations_and_labels(
+        missing_annotations, missing_labels = Provisioner('', False, None)._get_missing_annotations_and_labels(
             old_metadata, new_metadata)
 
         self.assertEqual(len(missing_annotations), 0)
@@ -167,7 +168,7 @@ class TestProvisioner(unittest.TestCase):
             'labels': {'label1': 'value1', 'label2': 'value2'}
         }
 
-        missing_annotations, missing_labels = Provisioner('', False)._get_missing_annotations_and_labels(
+        missing_annotations, missing_labels = Provisioner('', False, None)._get_missing_annotations_and_labels(
             old_metadata, new_metadata)
 
         self.assertEqual(len(missing_annotations), 2)
@@ -182,7 +183,7 @@ class TestProvisioner(unittest.TestCase):
             'labels': {'label1': 'value1', 'label2': 'value2'}
         }
 
-        missing_annotations, missing_labels = Provisioner('', False)._get_missing_annotations_and_labels(
+        missing_annotations, missing_labels = Provisioner('', False, None)._get_missing_annotations_and_labels(
             old_metadata, new_metadata)
 
         self.assertEqual(len(missing_annotations), 0)
@@ -192,8 +193,8 @@ class TestProvisioner(unittest.TestCase):
         missing_annotations = ['a1', 'a2', 'a3']
         settings.GET_ENVIRON_STRICT = True
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('', False)._notify_about_missing_items_in_template(items=missing_annotations,
-                                                                           missing_type='annotation')
+            Provisioner('', False, None)._notify_about_missing_items_in_template(items=missing_annotations,
+                                                                                 missing_type='annotation')
         self.assertTrue('Please pay attention to service annotations!'
                         in str(context.exception))
 
@@ -201,8 +202,8 @@ class TestProvisioner(unittest.TestCase):
         missing_labels = ['a1', 'a2', 'a3']
         settings.GET_ENVIRON_STRICT = True
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('', False)._notify_about_missing_items_in_template(items=missing_labels,
-                                                                           missing_type='label')
+            Provisioner('', False, None)._notify_about_missing_items_in_template(items=missing_labels,
+                                                                                 missing_type='label')
         self.assertTrue('Please pay attention to service labels!'
                         in str(context.exception))
 
@@ -210,59 +211,59 @@ class TestProvisioner(unittest.TestCase):
         missing_ports = [ServicePort(80, 'test1'), ServicePort(90, 'test2'), ServicePort(50, None)]
         settings.GET_ENVIRON_STRICT = True
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('', False)._notify_about_missing_items_in_template(items=missing_ports,
-                                                                           missing_type='port')
+            Provisioner('', False, None)._notify_about_missing_items_in_template(items=missing_ports,
+                                                                                 missing_type='port')
         self.assertTrue('Please pay attention to service ports!'
                         in str(context.exception))
 
     def test_deploy_replace(self):
         settings.CHECK_STATUS_TIMEOUT = 0
-        Provisioner('deploy', False).run("k8s/fixtures/deployment.yaml")
+        Provisioner('deploy', False, None).run("k8s/fixtures/deployment.yaml")
 
     def test_deploy_create(self):
-        Provisioner('deploy', False).run("k8s/fixtures/deployment_404.yaml")
+        Provisioner('deploy', False, None).run("k8s/fixtures/deployment_404.yaml")
 
     def test_deploy_unknown_api(self):
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('deploy', False).run("k8s/fixtures/deployment_no_api.yaml")
+            Provisioner('deploy', False, None).run("k8s/fixtures/deployment_no_api.yaml")
         self.assertTrue('Unknown apiVersion "test" in template "k8s/fixtures/deployment_no_api.yaml"'
                         in str(context.exception), context.exception)
 
     def test_service_replace(self):
-        Provisioner('deploy', False).run("k8s/fixtures/service.yaml")
+        Provisioner('deploy', False, None).run("k8s/fixtures/service.yaml")
 
     def test_service_replace_no_ports(self):
-        Provisioner('deploy', False).run("k8s/fixtures/service_no_ports.yaml")
+        Provisioner('deploy', False, None).run("k8s/fixtures/service_no_ports.yaml")
 
     def test_destroy_unknown_api(self):
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('destroy', False).run("k8s/fixtures/deployment_no_api.yaml")
+            Provisioner('destroy', False, None).run("k8s/fixtures/deployment_no_api.yaml")
         self.assertTrue('Unknown apiVersion "test" in template "k8s/fixtures/deployment_no_api.yaml"'
                         in str(context.exception), context.exception)
 
     def test_destroy_not_found(self):
-        Provisioner('destroy', False).run("k8s/fixtures/deployment_404.yaml")
+        Provisioner('destroy', False, None).run("k8s/fixtures/deployment_404.yaml")
 
     def test_destroy_fail(self):
         with self.assertRaises(RuntimeError) as context:
-            Provisioner('destroy', False).run("k8s/fixtures/service.yaml")
+            Provisioner('destroy', False, None).run("k8s/fixtures/service.yaml")
         self.assertTrue('' in str(context.exception), context.exception)
 
     def test_destroy_success(self):
-        Provisioner('destroy', False).run("k8s/fixtures/deployment.yaml")
+        Provisioner('destroy', False, None).run("k8s/fixtures/deployment.yaml")
 
     def test_get_apply_ports_case1(self):
         # old_port=55, new_port=55, res: no apply ports
         old_spec = ServiceSpec('case1')
         new_spec = {'ports': [{'port': 55}]}
-        apply_ports = Provisioner('deploy', False)._get_apply_ports(old_spec, new_spec)
+        apply_ports = Provisioner('deploy', False, None)._get_apply_ports(old_spec, new_spec)
         self.assertEqual(len(apply_ports), 0)
 
     def test_get_apply_ports_case2(self):
         # old_port=55, new_port=56, res: 1 apply port, 1 deleted
         old_spec = ServiceSpec('case2')
         new_spec = {'ports': [{'port': 56}]}
-        apply_ports = Provisioner('deploy', False)._get_apply_ports(old_spec, new_spec)
+        apply_ports = Provisioner('deploy', False, None)._get_apply_ports(old_spec, new_spec)
         self.assertEqual(len(apply_ports), 2)
         self.assertDictEqual(apply_ports[0], {'port': 55, '$patch': 'delete'})
         self.assertDictEqual(apply_ports[1], {'port': 56})
@@ -271,7 +272,7 @@ class TestProvisioner(unittest.TestCase):
         # old_port=55, new_port=56, name=test, res: 1 apply port, 1 deleted
         old_spec = ServiceSpec('case3')
         new_spec = {'ports': [{'port': 56, 'name': 'test'}]}
-        apply_ports = Provisioner('deploy', False)._get_apply_ports(old_spec, new_spec)
+        apply_ports = Provisioner('deploy', False, None)._get_apply_ports(old_spec, new_spec)
         self.assertEqual(len(apply_ports), 2)
         self.assertDictEqual(apply_ports[0], {'port': 55, '$patch': 'delete'})
         self.assertDictEqual(apply_ports[1], {'port': 56, 'name': 'test'})
@@ -280,7 +281,7 @@ class TestProvisioner(unittest.TestCase):
         # old_port=55,name=test, new_port=56,name=test, res: 1 apply port, 1 deleted
         old_spec = ServiceSpec('case4')
         new_spec = {'ports': [{'port': 56, 'name': 'foo'}]}
-        apply_ports = Provisioner('deploy', False)._get_apply_ports(old_spec, new_spec)
+        apply_ports = Provisioner('deploy', False, None)._get_apply_ports(old_spec, new_spec)
         self.assertEqual(len(apply_ports), 2)
         self.assertDictEqual(apply_ports[0], {'port': 55, '$patch': 'delete'})
         self.assertDictEqual(apply_ports[1], {'port': 56, 'name': 'foo'})
@@ -289,7 +290,7 @@ class TestProvisioner(unittest.TestCase):
         # add targetPort to existent port, res: 1 apply port
         old_spec = ServiceSpec('case5')
         new_spec = {'ports': [{'port': 55, 'name': 'test', 'targetPort': 90}]}
-        apply_ports = Provisioner('deploy', False)._get_apply_ports(old_spec, new_spec)
+        apply_ports = Provisioner('deploy', False, None)._get_apply_ports(old_spec, new_spec)
         self.assertEqual(len(apply_ports), 1)
         self.assertDictEqual(apply_ports[0], {'port': 55, 'node_port': None,
                                               'protocol': 'TCP', 'name': 'test', 'targetPort': 90})
@@ -298,7 +299,7 @@ class TestProvisioner(unittest.TestCase):
         # change targetPort, res: 1 apply port
         old_spec = ServiceSpec('case6')
         new_spec = {'ports': [{'port': 55, 'name': 'test', 'targetPort': 99}]}
-        apply_ports = Provisioner('deploy', False)._get_apply_ports(old_spec, new_spec)
+        apply_ports = Provisioner('deploy', False, None)._get_apply_ports(old_spec, new_spec)
         self.assertEqual(len(apply_ports), 1)
         self.assertDictEqual(apply_ports[0], {'port': 55, 'node_port': None,
                                               'protocol': 'TCP', 'name': 'test', 'targetPort': 99})
@@ -307,7 +308,7 @@ class TestProvisioner(unittest.TestCase):
         # change protocol, res: 1 apply port
         old_spec = ServiceSpec('case7')
         new_spec = {'ports': [{'port': 55, 'name': 'test', 'protocol': 'UDP'}]}
-        apply_ports = Provisioner('deploy', False)._get_apply_ports(old_spec, new_spec)
+        apply_ports = Provisioner('deploy', False, None)._get_apply_ports(old_spec, new_spec)
         self.assertEqual(len(apply_ports), 1)
         self.assertDictEqual(apply_ports[0], {'port': 55, 'node_port': None,
                                               'protocol': 'UDP', 'name': 'test', 'target_port': 55})
@@ -317,24 +318,24 @@ class TestProvisioner(unittest.TestCase):
         old_spec = ServiceSpec('case8')
         new_spec = {'ports': [{'port': 90, 'name': 'test1'},
                               {'port': 99, 'name': 'test2'}]}
-        apply_ports = Provisioner('deploy', False)._get_apply_ports(old_spec, new_spec)
+        apply_ports = Provisioner('deploy', False, None)._get_apply_ports(old_spec, new_spec)
         self.assertEqual(len(apply_ports), 3)
         self.assertDictEqual(apply_ports[0], {'port': 55, '$patch': 'delete'})
         self.assertDictEqual(apply_ports[1], {'port': 90, 'name': 'test1'})
         self.assertDictEqual(apply_ports[2], {'port': 99, 'name': 'test2'})
 
     def test_pvc_replace_equals(self):
-        Provisioner('deploy', False).run("k8s/fixtures/pvc.yaml")
+        Provisioner('deploy', False, None).run("k8s/fixtures/pvc.yaml")
 
     def test_pvc_replace_not_equals(self):
         with self.assertRaises(ProvisioningError) as context:
-            Provisioner('deploy', False).run("k8s/fixtures/pvc2.yaml")
+            Provisioner('deploy', False, None).run("k8s/fixtures/pvc2.yaml")
         self.assertTrue('Replace persistent volume claim fail' in str(context.exception), context.exception)
 
     # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#volume-mode
     def test_pvc_replace_new_attribute(self):
         with self.assertRaises(ProvisioningError) as context:
-            Provisioner('deploy', False).run("k8s/fixtures/pvc3.yaml")
+            Provisioner('deploy', False, None).run("k8s/fixtures/pvc3.yaml")
         self.assertTrue('Replace persistent volume claim fail'
                         in str(context.exception))
 

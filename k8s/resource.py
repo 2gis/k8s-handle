@@ -251,8 +251,8 @@ class Provisioner:
             log.info("Got pod name and pod containers {} {}".format(pod_name, pod_containers))
 
             if not pod_name:
-                log.error('Pod not found for showing logs')
-                exit(1)
+                log.warning('Pod not found for showing logs')
+                return
 
             if self._wait_pod_running(
                     kube_client,

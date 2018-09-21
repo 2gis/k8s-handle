@@ -30,6 +30,8 @@ deploy_parser.add_argument('-c', '--config', required=False, help='Config file, 
 deploy_parser.add_argument('--dry-run', required=False, action='store_true', help='Don\'t run kubectl commands')
 deploy_parser.add_argument('--sync-mode', action='store_true', required=False, default=False,
                            help='Turn on sync mode and wait deployment ending')
+deploy_parser.add_argument('--show-logs', action='store_true', required=False, default=False, help='Show logs for jobs')
+deploy_parser.add_argument('--tail-lines', type=int, required=False, help='Lines of recent log file to display')
 deploy_parser.add_argument('--tries', type=int, required=False, default=360,
                            help='Count of tries to check deployment status')
 deploy_parser.add_argument('--retry-delay', type=int, required=False, default=5, help='Sleep between tries in seconds')
@@ -67,6 +69,14 @@ def main():
     if 'strict' in args:
         settings.GET_ENVIRON_STRICT = args.strict
 
+    if 'tail_lines' in args:
+        settings.COUNT_LOG_LINES = args.tail_lines
+
+    show_logs = False
+
+    if 'show_logs' in args:
+        show_logs = args.show_logs
+
     try:
         context = config.load_context_section(args.section)
         render = templating.Renderer(settings.TEMPLATES_DIR)
@@ -84,7 +94,7 @@ def main():
 
         log.info('Using namespace {}'.format(context.get('k8s_namespace')))
         settings.K8S_NAMESPACE = context.get('k8s_namespace')
-        p = Provisioner(args.command, args.sync_mode)
+        p = Provisioner(args.command, args.sync_mode, show_logs)
         d = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
 
         for resource in resources:

@@ -13,3 +13,8 @@ section-2:
   var: "{{ file='tests/fixtures/include_with_env.yaml' }}"
   kubectl:
     - template: template2.yaml.j2
+
+section-3:
+  var: "{{ file='tests/fixtures/incorrect_include.yaml' }}"
+  kubectl:
+    - template: template2.yaml.j2

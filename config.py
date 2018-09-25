@@ -71,15 +71,22 @@ def _merge_options(base, rewrites):
     return result
 
 
-def _update_context_recursively(context, depth=0):
-    if depth > settings.MAX_CONFIG_INCLUDE_DEPTH:
-        raise RuntimeError('Max include depth for config has reached')
+def _update_single_variable(value, include_history):
+    if value in include_history:
+        raise RuntimeError('Infinite include loop')
 
+    local_history = copy.copy(include_history)
+    local_history.append(value)
+
+    return _update_context_recursively(_process_variable(value), local_history)
+
+
+def _update_context_recursively(context, include_history=[]):
     if isinstance(context, dict):
         output = {}
         for key, value in context.items():
             if isinstance(value, str):
-                output[key] = _update_context_recursively(_process_variable(value), depth + 1)
+                output[key] = _update_single_variable(value, include_history)
             else:
                 output[key] = _update_context_recursively(value)
         return output
@@ -87,7 +94,7 @@ def _update_context_recursively(context, depth=0):
         output = []
         for value in context:
             if isinstance(value, str):
-                output.append(_update_context_recursively(_process_variable(value), depth + 1))
+                output.append(_update_single_variable(value, include_history))
             else:
                 output.append(_update_context_recursively(value))
         return output

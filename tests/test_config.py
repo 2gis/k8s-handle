@@ -171,13 +171,10 @@ class TestContextGeneration(unittest.TestCase):
 
         settings.GET_ENVIRON_STRICT = False
 
-    def test_max_recursion_depth(self):
+    def test_infinite_recursion_loop(self):
         settings.CONFIG_FILE = 'tests/fixtures/config_with_include_and_env_vars.yaml'
-        settings.MAX_CONFIG_INCLUDE_DEPTH = 1
         with self.assertRaises(RuntimeError):
-            config.load_context_section('section-1')
-
-        settings.MAX_CONFIG_INCLUDE_DEPTH = 5
+            config.load_context_section('section-3')
 
     def test_get_client_config(self):
         context = {

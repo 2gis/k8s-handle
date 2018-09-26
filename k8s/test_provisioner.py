@@ -375,8 +375,16 @@ class TestProvisioner(unittest.TestCase):
 class TestKubeObject(unittest.TestCase):
     def test_replicas_equal(self):
         replicas = (1, 1, 1)
-        self.assertTrue(Provisioner._replicas_are_equal(replicas))
+        self.assertTrue(Provisioner._replicas_count_are_greater_or_equal(replicas))
+
+    def test_replicas_greater(self):
+        replicas = (2, 3, 3)
+        self.assertTrue(Provisioner._replicas_count_are_greater_or_equal(replicas))
 
     def test_replicas_not_equal(self):
-        replicas = (0, 1, 1)
-        self.assertFalse(Provisioner._replicas_are_equal(replicas))
+        replicas = (1, 1, 0)
+        self.assertFalse(Provisioner._replicas_count_are_greater_or_equal(replicas))
+
+    def test_replicas_with_hpa_not_equal(self):
+        replicas = (6, 7, 5)
+        self.assertFalse(Provisioner._replicas_count_are_greater_or_equal(replicas))

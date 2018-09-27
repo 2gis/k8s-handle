@@ -540,7 +540,7 @@ class Adapter:
         try:
             if self.kind in ['service', ]:
                 return self.api.delete_namespaced_service(name=self.name, namespace=self.namespace,
-                                                          body=client.V1DeleteOptions(propagation_policy='Fore'))
+                                                          body=client.V1DeleteOptions(propagation_policy='Foreground'))
             if self.kind in ['namespace', 'storage_class', 'persistent_volume']:
                 return getattr(self.api, 'delete_{}'.format(self.kind))(
                     name=self.name, body=client.V1DeleteOptions(propagation_policy='Foreground'))

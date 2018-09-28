@@ -53,7 +53,28 @@ destroy_parser.add_argument('--use-kubeconfig', action='store_true', required=Fa
 
 
 def main():
-    args = parser.parse_known_args()[0]
+    # INFO furiousassault: backward compatibility rough attempt
+    # must be removed later according to https://github.com/2gis/k8s-handle/issues/40
+    deprecation_warnings = 0
+    filtered_arguments = []
+
+    for argument in sys.argv[1:]:
+        if argument in ['--sync-mode=true', '--sync-mode=True', '--dry-run=true', '--dry-run=True']:
+            deprecation_warnings += 1
+            filtered_arguments.append(argument.split('=')[0])
+            continue
+
+        if argument in ['--sync-mode=false', '--sync-mode=False', '--dry-run=false', '--dry-run=False']:
+            deprecation_warnings += 1
+            continue
+
+        filtered_arguments.append(argument)
+
+    args, unrecognized_args = parser.parse_known_args(filtered_arguments)
+
+    if deprecation_warnings or unrecognized_args:
+        log.warning("Explicit true/false arguments to --sync-mode and --dry-run keys are deprecated "
+                    "and will be removed in the future. Use these keys without arguments instead.")
 
     if 'config' in args and args.config:
         settings.CONFIG_FILE = args.config

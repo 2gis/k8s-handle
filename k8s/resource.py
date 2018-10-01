@@ -184,6 +184,7 @@ class Provisioner:
     def _deploy(self, file_path):
         template_body = get_template_context(file_path)
         kube_client = Adapter(template_body)
+        log.info('Using namespace "{}"'.format(kube_client.namespace))
 
         if kube_client.api is None:
             raise RuntimeError('Unknown apiVersion "{}" in template "{}"'.format(template_body['apiVersion'],
@@ -266,6 +267,7 @@ class Provisioner:
     def _destroy(self, file_path):
         template_body = get_template_context(file_path)
         kube_client = Adapter(template_body)
+        log.info('Using namespace "{}"'.format(kube_client.namespace))
         log.info('Trying to delete {} "{}"'.format(template_body['kind'], kube_client.name))
         if kube_client.api is None:
             raise RuntimeError('Unknown apiVersion "{}" in template "{}"'.format(template_body['apiVersion'],

@@ -2,20 +2,23 @@
 
 import argparse
 import logging
+import os
 import sys
 
 from kubernetes.client import Configuration, VersionApi
-from kubernetes.config import load_kube_config
+from kubernetes.config import list_kube_config_contexts, load_kube_config
 
 import config
 import settings
 import templating
-from filesystem import InvalidYamlError
 from config import check_required_vars
 from config import get_client_config
+from filesystem import InvalidYamlError
 from k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
 from k8s.resource import Provisioner
 from k8s.resource import ProvisioningError
+
+KUBE_CONFIG_DEFAULT_LOCATION = os.path.expanduser('~/.kube/config')
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)
@@ -109,12 +112,20 @@ def main():
 
         if 'use_kubeconfig' in args and args.use_kubeconfig:
             load_kube_config()
+            namespace = list_kube_config_contexts()[1].get('context').get('namespace')
+
+            if not namespace:
+                raise RuntimeError("Unable to determine namespace of current context")
+
+            settings.K8S_NAMESPACE = namespace
         else:
             Configuration.set_default(get_client_config(context))
             check_required_vars(context, ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace'])
 
-        log.info('Using namespace {}'.format(context.get('k8s_namespace')))
-        settings.K8S_NAMESPACE = context.get('k8s_namespace')
+        if context.get('k8s_namespace'):
+            settings.K8S_NAMESPACE = context.get('k8s_namespace')
+
+        log.info('Default namespace "{}"'.format(settings.K8S_NAMESPACE))
         p = Provisioner(args.command, args.sync_mode, show_logs)
         d = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
 

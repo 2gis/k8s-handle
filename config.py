@@ -7,7 +7,7 @@ from kubernetes import client
 
 import settings
 from dictionary import merge
-from filesystem import write_file_tmp, load_yaml
+from filesystem import load_yaml, write_file_tmp
 from templating import b64decode
 
 log = logging.getLogger(__name__)

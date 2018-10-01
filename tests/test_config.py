@@ -3,7 +3,7 @@ import shutil
 import unittest
 import settings
 import config
-from config import InvalidYamlException
+from filesystem import InvalidYamlError
 from config import get_client_config
 
 
@@ -35,7 +35,7 @@ class TestContextGeneration(unittest.TestCase):
 
     def test_config_incorrect(self):
         settings.CONFIG_FILE = 'tests/fixtures/incorrect_config.yaml'
-        with self.assertRaises(InvalidYamlException):
+        with self.assertRaises(InvalidYamlError):
             config.load_context_section('section')
 
     def test_not_existed_section(self):

@@ -1,30 +1,25 @@
+import copy
+import logging
 import os
 import re
-import yaml
-import atexit
-import settings
-import tempfile
-import logging
-import copy
 
 from kubernetes import client
+
+import settings
+from dictionary import merge
+from filesystem import write_file_tmp, load_yaml
 from templating import b64decode
 
 log = logging.getLogger(__name__)
 
-
 INCLUDE_RE = re.compile('{{\s?file\s?=\s?\'(?P<file>[^\']*)\'\s?}}')
-CUSTOM_ENV_RE = re.compile('^(?P<prefix>.*){{\s*env\s*=\s*\'(?P<env>[^\']*)\'\s*}}(?P<postfix>.*)$')    # noqa
-
-
-class InvalidYamlException(Exception):
-    pass
+CUSTOM_ENV_RE = re.compile('^(?P<prefix>.*){{\s*env\s*=\s*\'(?P<env>[^\']*)\'\s*}}(?P<postfix>.*)$')  # noqa
 
 
 def get_client_config(context):
     c = client.Configuration()
     c.host = context.get('k8s_master_uri')
-    c.ssl_ca_cert = write_tmp_file(b64decode(context.get('k8s_ca_base64')).encode('utf-8'))
+    c.ssl_ca_cert = write_file_tmp(b64decode(context.get('k8s_ca_base64')).encode('utf-8'))
     c.api_key = {"authorization": "Bearer " + context.get('k8s_token')}
     if 'k8s_handle_debug' in context:
         if context['k8s_handle_debug'] is True \
@@ -34,41 +29,25 @@ def get_client_config(context):
     return c
 
 
-def _load_context_from_file(path):
-    with open(path) as f:
-        try:
-            return yaml.load(f.read())
-        except Exception as e:
-            raise InvalidYamlException(e)
-
-
 def _process_variable(variable):
     matches = INCLUDE_RE.match(variable)
-    if matches is not None:
-        config_file = matches.groupdict().get('file')
-        with open(config_file, 'r') as f:
-            include = yaml.load(f.read())
-            return include
+
+    if matches:
+        return load_yaml(matches.groupdict().get('file'))
+
     matches = CUSTOM_ENV_RE.match(variable)
-    if matches is not None:
+
+    if matches:
         prefix = matches.groupdict().get('prefix')
         env_var_name = matches.groupdict().get('env')
         postfix = matches.groupdict().get('postfix')
+
         if os.environ.get(env_var_name) is None and settings.GET_ENVIRON_STRICT:
             raise RuntimeError('Environment variable "{}" is not set'.format(env_var_name))
+
         return prefix + os.environ.get(env_var_name, '') + postfix
+
     return variable
-
-
-def _merge_options(base, rewrites):
-    result = copy.deepcopy(base)
-    for key, value in rewrites.items():
-        if isinstance(value, dict) and isinstance(result.get(key), dict):
-            result[key] = _merge_options(result[key], value)
-        else:
-            result[key] = value
-
-    return result
 
 
 def _update_single_variable(value, include_history):
@@ -105,7 +84,9 @@ def _update_context_recursively(context, include_history=[]):
 def load_context_section(section):
     if section == settings.COMMON_SECTION_NAME:
         raise RuntimeError('Section "{}" is not intended to deploy'.format(settings.COMMON_SECTION_NAME))
-    context = _load_context_from_file(settings.CONFIG_FILE)
+
+    context = load_yaml(settings.CONFIG_FILE)
+
     if context is None:
         raise RuntimeError('Config file "{}" is empty'.format(settings.CONFIG_FILE))
     if section and section not in context:
@@ -114,8 +95,9 @@ def load_context_section(section):
     # delete all sections except common and used section
     context = {key: context[key] for key in ['common', section]}
     context = _update_context_recursively(context)
+
     if section and section in context:
-        context = _merge_options(context[settings.COMMON_SECTION_NAME], context[section])
+        context = merge(context[settings.COMMON_SECTION_NAME], context[section])
 
     if 'templates' not in context and 'kubectl' not in context:
         raise RuntimeError(
@@ -157,19 +139,3 @@ def check_required_vars(context_dict, required_vars):
             'Variables "{}" not found (or empty) in config file "{}". '
             'Please, set all required variables: {}.'.format(', '.join(missing_vars), settings.CONFIG_FILE,
                                                              ', '.join(required_vars)))
-
-
-def remove_file(file_path):
-    try:
-        os.remove(file_path)
-    except Exception as e:
-        log.warning('Unable to remove "{}", due to "{}"'.format(file_path, e))
-        pass
-
-
-def write_tmp_file(data):
-    f = tempfile.NamedTemporaryFile(delete=False)
-    f.write(data)
-    f.flush()
-    atexit.register(remove_file, f.name)
-    return f.name

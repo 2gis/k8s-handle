@@ -10,7 +10,7 @@ from kubernetes.config import load_kube_config
 import config
 import settings
 import templating
-from config import InvalidYamlException
+from filesystem import InvalidYamlError
 from config import check_required_vars
 from config import get_client_config
 from k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
@@ -127,8 +127,8 @@ def main():
     except templating.TemplateRenderingError as e:
         log.error('Template generation error: {}'.format(e))
         sys.exit(1)
-    except InvalidYamlException as e:
-        log.error('Incorrect config.yaml: {}'.format(e))
+    except InvalidYamlError as e:
+        log.error('{}'.format(e))
         sys.exit(1)
     except DeprecationError as e:
         log.error('Deprecation warning: {}'.format(e))

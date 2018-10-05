@@ -4,9 +4,11 @@ Easy CI/CD for Kubernetes clusters with python and jinja2
 
 k8s-handle is a command line tool that facilitates continuous delivery for Kubernetes applications.
 Also k8s-handle supports environments, so you can use same deployment templates for different environments like `staging` and `production`.
+k8s-handle is a helm alternative, but without package manager
 
 # Table of contents
 * [Features](#features)
+* [k8s-handle vs helm](#k8s-handle-vs-helm)
 * [Before you begin](#before-you-begin)
 * [Usage with docker](#usage-with-docker)
 * [Using with CI/CD tools](#using-with-cicd-tools)
@@ -43,6 +45,13 @@ Also k8s-handle supports environments, so you can use same deployment templates 
 * Strict mode, stop deploy if any warning appear
 * Easy integration with CI pipeline (gitlab ci for example)
 * Ability to destroy resources (deploy and destroy from git branches, gitlab environments)
+
+# k8s-handle vs helm
+* k8s-handle acts like template parser and provisioning tool, but not package manager included like in helm
+* k8s-handle don't need in cluster tools like The Tiller Server, you need only ServiceAccount for deploy
+* k8s-handle secure by default, you don't need to generate any certificates for deploying application, k8s-handle uses kubernetes REST API with https, like kubectl
+
+![Deploy process](/helmVsK8s-handle.png)
 
 # Before you begin
 * Setup Kubernetes cluster [https://kubernetes.io/docs/setup/](https://kubernetes.io/docs/setup/), or use any predefined

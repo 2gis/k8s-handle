@@ -2,7 +2,6 @@
 
 import argparse
 import logging
-import os
 import sys
 
 from kubernetes.client import Configuration, VersionApi
@@ -18,8 +17,6 @@ from k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
 from k8s.resource import Provisioner
 from k8s.resource import ProvisioningError
 
-KUBE_CONFIG_DEFAULT_LOCATION = os.path.expanduser('~/.kube/config')
-
 log = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)
 
@@ -27,32 +24,30 @@ parser = argparse.ArgumentParser(description='CLI utility generate k8s resources
 subparsers = parser.add_subparsers(dest="command")
 subparsers.required = True
 
-deploy_parser = subparsers.add_parser('deploy', help='Sub command for deploy')
-deploy_parser.add_argument('-s', '--section', required=True, type=str, help='Section to deploy from config file')
-deploy_parser.add_argument('-c', '--config', required=False, help='Config file, default: config.yaml')
-deploy_parser.add_argument('--dry-run', required=False, action='store_true', help='Don\'t run kubectl commands')
-deploy_parser.add_argument('--sync-mode', action='store_true', required=False, default=False,
-                           help='Turn on sync mode and wait deployment ending')
-deploy_parser.add_argument('--show-logs', action='store_true', required=False, default=False, help='Show logs for jobs')
-deploy_parser.add_argument('--tail-lines', type=int, required=False, help='Lines of recent log file to display')
-deploy_parser.add_argument('--tries', type=int, required=False, default=360,
-                           help='Count of tries to check deployment status')
-deploy_parser.add_argument('--retry-delay', type=int, required=False, default=5, help='Sleep between tries in seconds')
-deploy_parser.add_argument('--strict', action='store_true', required=False,
-                           help='Check existence of all env variables in config.yaml and stop deploy if var is not set')
-deploy_parser.add_argument('--use-kubeconfig', action='store_true', required=False, help='Try to use kube config')
+parser_target = argparse.ArgumentParser(add_help=False)
+parser_target.add_argument('-s', '--section', required=True, type=str, help='Section to deploy from config file')
+parser_target.add_argument('-c', '--config', required=False, help='Config file, default: config.yaml')
 
-destroy_parser = subparsers.add_parser('destroy', help='Sub command for destroy app')
-destroy_parser.add_argument('-s', '--section', required=True, type=str, help='Section to destroy from config file')
-destroy_parser.add_argument('-c', '--config', type=str, required=False, help='Config file, default: config.yaml')
-destroy_parser.add_argument('--dry-run', action='store_true', required=False, default=False,
-                            help='Don\'t run kubectl commands')
-destroy_parser.add_argument('--sync-mode', action='store_true', required=False, default=False,
-                            help='Turn on sync mode and wait destruction ending')
-destroy_parser.add_argument('--tries', type=int, required=False, default=360,
-                            help='Count of tries to check destruction status')
-destroy_parser.add_argument('--retry-delay', type=int, required=False, default=5, help='Sleep between tries in seconds')
-destroy_parser.add_argument('--use-kubeconfig', action='store_true', required=False, help='Try to use kube config')
+parser_provisioning = argparse.ArgumentParser(add_help=False)
+parser_provisioning.add_argument('--dry-run', required=False, action='store_true', help='Don\'t run kubectl commands')
+parser_provisioning.add_argument('--sync-mode', action='store_true', required=False, default=False,
+                                 help='Turn on sync mode and wait deployment ending')
+parser_provisioning.add_argument('--tries', type=int, required=False, default=360,
+                                 help='Count of tries to check deployment status')
+parser_provisioning.add_argument('--retry-delay', type=int, required=False, default=5,
+                                 help='Sleep between tries in seconds')
+parser_provisioning.add_argument('--use-kubeconfig', action='store_true', required=False, help='Try to use kube config')
+parser_provisioning.add_argument('--k8s-handle-debug', required=False, help='Show K8S client debug messages')
+
+parser_deploy = subparsers.add_parser('deploy', parents=[parser_provisioning, parser_target],
+                                      help='Sub command for deploy app')
+parser_deploy.add_argument('--strict', action='store_true', required=False,
+                           help='Check existence of all env variables in config.yaml and stop deploy if var is not set')
+parser_deploy.add_argument('--show-logs', action='store_true', required=False, default=False, help='Show logs for jobs')
+parser_deploy.add_argument('--tail-lines', type=int, required=False, help='Lines of recent log file to display')
+
+parser_destroy = subparsers.add_parser('destroy', parents=[parser_provisioning, parser_target],
+                                       help='Sub command for destroy app')
 
 
 def main():
@@ -79,38 +74,26 @@ def main():
         log.warning("Explicit true/false arguments to --sync-mode and --dry-run keys are deprecated "
                     "and will be removed in the future. Use these keys without arguments instead.")
 
-    if 'config' in args and args.config:
-        settings.CONFIG_FILE = args.config
-
-    if 'tries' in args:
-        settings.CHECK_STATUS_TRIES = args.tries
-        settings.CHECK_DAEMONSET_STATUS_TRIES = args.tries
-
-    if 'retry_delay' in args:
-        settings.CHECK_STATUS_TIMEOUT = args.retry_delay
-        settings.CHECK_DAEMONSET_STATUS_TIMEOUT = args.retry_delay
-
-    if 'strict' in args:
-        settings.GET_ENVIRON_STRICT = args.strict
-
-    if 'tail_lines' in args:
-        settings.COUNT_LOG_LINES = args.tail_lines
-
-    show_logs = False
-
-    if 'show_logs' in args:
-        show_logs = args.show_logs
+    # it's handy to operate with args as with dictionary
+    args = vars(args)
+    settings.CHECK_STATUS_TRIES = args.get('tries')
+    settings.CHECK_DAEMONSET_STATUS_TRIES = args.get('tries')
+    settings.CHECK_STATUS_TIMEOUT = args.get('retry_delay')
+    settings.CHECK_DAEMONSET_STATUS_TIMEOUT = args.get('retry_delay')
+    settings.GET_ENVIRON_STRICT = args.get('strict')
+    settings.COUNT_LOG_LINES = args.get('tail_lines')
+    settings.CONFIG_FILE = args.get('config') or settings.CONFIG_FILE
 
     try:
-        context = config.load_context_section(args.section)
+        context = config.load_context_section(args['section'])
         render = templating.Renderer(settings.TEMPLATES_DIR)
         resources = render.generate_by_context(context)
         # INFO rvadim: https://github.com/kubernetes-client/python/issues/430#issuecomment-359483997
 
-        if args.dry_run:
+        if args.get('dry_run'):
             return
 
-        if 'use_kubeconfig' in args and args.use_kubeconfig:
+        if args.get('use_kubeconfig'):
             load_kube_config()
             namespace = list_kube_config_contexts()[1].get('context').get('namespace')
 
@@ -126,7 +109,7 @@ def main():
             settings.K8S_NAMESPACE = context.get('k8s_namespace')
 
         log.info('Default namespace "{}"'.format(settings.K8S_NAMESPACE))
-        p = Provisioner(args.command, args.sync_mode, show_logs)
+        p = Provisioner(args['command'], args.get('sync_mode'), args.get('show-logs'))
         d = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
 
         for resource in resources:

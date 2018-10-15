@@ -1,10 +1,21 @@
 import os
 import shutil
 import unittest
-import settings
+
 import config
+import settings
+from config import KEY_K8S_CA_BASE64, KEY_K8S_MASTER_URI, KEY_K8S_NAMESPACE, KEY_K8S_NAMESPACE_ENV, KEY_K8S_TOKEN
+from config import KEY_K8S_CA_BASE64_URI_ENV_DEPRECATED, KEY_K8S_HANDLE_DEBUG, KEY_K8S_MASTER_URI_ENV_DEPRECATED
+from config import PriorityEvaluator
 from filesystem import InvalidYamlError
-from config import get_client_config
+
+VALUE_CLI = 'value_cli'
+VALUE_CONTEXT = 'value_context'
+VALUE_ENV = 'value_env'
+VALUE_ENV_DEPRECATED = 'value_env_deprecated'
+VALUE_CA = 'Q0EK'
+VALUE_TOKEN = 'token'
+KUBECONFIG_NAMESPACE = 'kubeconfig_namespace'
 
 
 class TestContextGeneration(unittest.TestCase):
@@ -176,41 +187,6 @@ class TestContextGeneration(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             config.load_context_section('section-3')
 
-    def test_get_client_config(self):
-        context = {
-            'k8s_master_uri': 'http://test.test/',
-            'k8s_ca_base64': 'Q0EK',
-            'k8s_token': 'token',
-        }
-        client = get_client_config(context)
-        self.assertFalse(client.debug)
-        self.assertEqual(client.host, 'http://test.test/')
-        with open(client.ssl_ca_cert) as f:
-            self.assertEqual(f.read(), 'CA\n')
-        self.assertEqual(client.api_key, {'authorization': 'Bearer token'})
-
-        context['k8s_handle_debug'] = ''
-        self.assertFalse(get_client_config(context).debug)
-        context['k8s_handle_debug'] = '1'
-        self.assertFalse(get_client_config(context).debug)
-        context['k8s_handle_debug'] = 'False'
-        self.assertFalse(get_client_config(context).debug)
-        context['k8s_handle_debug'] = 'false'
-        self.assertFalse(get_client_config(context).debug)
-
-        context['k8s_handle_debug'] = 'true'
-        self.assertTrue(get_client_config(context).debug)
-        context['k8s_handle_debug'] = 'True'
-        self.assertTrue(get_client_config(context).debug)
-
-    def test_check_k8s_settings(self):
-        settings.CONFIG_FILE = 'tests/fixtures/config_without_k8s.yaml'
-        c = config.load_context_section('deployment')
-        with self.assertRaises(RuntimeError) as context:
-            config.check_required_vars(c, ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace'])
-        self.assertTrue('Variables "k8s_token, k8s_ca_base64" not found '
-                        '(or empty)' in str(context.exception), )
-
     def test_check_empty_var(self):
         settings.CONFIG_FILE = 'tests/fixtures/config.yaml'
         settings.GET_ENVIRON_STRICT = True
@@ -219,3 +195,80 @@ class TestContextGeneration(unittest.TestCase):
         settings.GET_ENVIRON_STRICT = False
         self.assertTrue('Environment variable "EMPTY_ENV" is not set'
                         in str(context.exception))
+
+
+class TestPriorityEvaluation(unittest.TestCase):
+    def test_first_none_argument(self):
+        self.assertIsNone(PriorityEvaluator._first())
+        self.assertIsNone(PriorityEvaluator._first(None))
+        self.assertIsNone(PriorityEvaluator._first(None, False, 0, "", {}, []))
+
+    def test_first_priority(self):
+        self.assertEqual(PriorityEvaluator._first(VALUE_CLI, VALUE_ENV), VALUE_CLI)
+        self.assertEqual(PriorityEvaluator._first("", VALUE_ENV), VALUE_ENV)
+
+    def test_k8s_namespace_default(self):
+        context = {KEY_K8S_NAMESPACE: VALUE_CONTEXT}
+        env = {KEY_K8S_NAMESPACE_ENV: VALUE_ENV}
+        evaluator = PriorityEvaluator({}, context, env)
+
+        self.assertEqual(evaluator.k8s_namespace_default(), VALUE_CONTEXT)
+        self.assertEqual(evaluator.k8s_namespace_default(KUBECONFIG_NAMESPACE), VALUE_CONTEXT)
+
+        context.pop(KEY_K8S_NAMESPACE)
+        self.assertEqual(evaluator.k8s_namespace_default(), VALUE_ENV)
+        self.assertEqual(evaluator.k8s_namespace_default(KUBECONFIG_NAMESPACE), KUBECONFIG_NAMESPACE)
+
+    def test_k8s_client_configuration_missing_uri(self):
+        evaluator = PriorityEvaluator({KEY_K8S_CA_BASE64: VALUE_CLI, KEY_K8S_TOKEN: VALUE_CLI}, {}, {})
+
+        with self.assertRaises(RuntimeError):
+            evaluator.k8s_client_configuration()
+
+    def test_k8s_client_configuration_missing_k8s_ca(self):
+        evaluator = PriorityEvaluator({KEY_K8S_MASTER_URI: VALUE_CLI, KEY_K8S_TOKEN: VALUE_CLI}, {}, {})
+
+        with self.assertRaises(RuntimeError):
+            evaluator.k8s_client_configuration()
+
+    def test_k8s_client_configuration_missing_token(self):
+        evaluator = PriorityEvaluator({
+            KEY_K8S_MASTER_URI: VALUE_CLI,
+            KEY_K8S_CA_BASE64: VALUE_CLI,
+        }, {}, {})
+
+        with self.assertRaises(RuntimeError):
+            evaluator.k8s_client_configuration()
+
+    def test_k8s_client_configuration_success(self):
+        evaluator = PriorityEvaluator({
+            KEY_K8S_MASTER_URI: VALUE_CLI,
+            KEY_K8S_CA_BASE64: VALUE_CA,
+            KEY_K8S_TOKEN: VALUE_TOKEN,
+        }, {}, {})
+        configuration = evaluator.k8s_client_configuration()
+        self.assertEqual(configuration.host, VALUE_CLI)
+        self.assertEqual(configuration.api_key, {'authorization': 'Bearer token'})
+        self.assertEqual(configuration.host, VALUE_CLI)
+        self.assertFalse(configuration.debug)
+
+        with open(configuration.ssl_ca_cert) as f:
+            self.assertEqual(f.read(), 'CA\n')
+
+        evaluator = PriorityEvaluator({
+            KEY_K8S_MASTER_URI: VALUE_CLI,
+            KEY_K8S_CA_BASE64: VALUE_CA,
+            KEY_K8S_TOKEN: VALUE_TOKEN,
+        }, {KEY_K8S_HANDLE_DEBUG: 'true'}, {})
+        configuration = evaluator.k8s_client_configuration()
+        self.assertTrue(configuration.debug)
+
+    def test_environment_deprecated(self):
+        evaluator = PriorityEvaluator({}, {}, {KEY_K8S_CA_BASE64_URI_ENV_DEPRECATED: VALUE_ENV_DEPRECATED})
+        self.assertTrue(evaluator.environment_deprecated())
+        evaluator = PriorityEvaluator({}, {}, {KEY_K8S_MASTER_URI_ENV_DEPRECATED: VALUE_ENV_DEPRECATED})
+        self.assertTrue(evaluator.environment_deprecated())
+        evaluator = PriorityEvaluator({}, {}, {KEY_K8S_CA_BASE64_URI_ENV_DEPRECATED: ''})
+        self.assertFalse(evaluator.environment_deprecated())
+        evaluator = PriorityEvaluator({}, {}, {KEY_K8S_MASTER_URI_ENV_DEPRECATED: ''})
+        self.assertFalse(evaluator.environment_deprecated())

@@ -9,11 +9,9 @@ CONFIG_FILE = os.environ.get('CONFIG_FILE', 'config.yaml')
 COMMON_SECTION_NAME = 'common'
 TEMPLATES_DIR = os.environ.get('TEMPLATES_DIR', 'templates')
 
-K8S_CA = os.environ.get('K8S_CA')
-K8S_HOST = os.environ.get('K8S_HOST')
-K8S_TOKEN = os.environ.get('K8S_TOKEN')
-K8S_NAMESPACE = os.environ.get('K8S_NAMESPACE')
 K8S_CONFIG_DIR = os.environ.get('K8S_CONFIG_DIR', '{}/.kube/'.format(os.path.expanduser('~')))
+
+K8S_NAMESPACE = None
 
 TEMP_DIR = os.environ.get('TEMP_DIR', '/tmp/k8s-handle')
 

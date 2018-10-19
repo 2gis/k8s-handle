@@ -2,20 +2,18 @@
 
 import argparse
 import logging
+import os
 import sys
 
-from kubernetes.client import Configuration, VersionApi
+from kubernetes import client
 from kubernetes.config import list_kube_config_contexts, load_kube_config
 
 import config
 import settings
 import templating
-from config import check_required_vars
-from config import get_client_config
 from filesystem import InvalidYamlError
 from k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
-from k8s.resource import Provisioner
-from k8s.resource import ProvisioningError
+from k8s.resource import Provisioner, ProvisioningError
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)
@@ -36,8 +34,15 @@ parser_provisioning.add_argument('--tries', type=int, required=False, default=36
                                  help='Count of tries to check deployment status')
 parser_provisioning.add_argument('--retry-delay', type=int, required=False, default=5,
                                  help='Sleep between tries in seconds')
-parser_provisioning.add_argument('--use-kubeconfig', action='store_true', required=False, help='Try to use kube config')
-parser_provisioning.add_argument('--k8s-handle-debug', required=False, help='Show K8S client debug messages')
+parser_provisioning.add_argument('--use-kubeconfig', action='store_true', required=False,
+                                 help='Try to use kube config')
+parser_provisioning.add_argument('--k8s-handle-debug', action='store_true', required=False,
+                                 help='Show K8S client debug messages')
+
+arguments_connection = parser_provisioning.add_argument_group()
+arguments_connection.add_argument('--k8s-master-uri', required=False, help='K8S master to connect to')
+arguments_connection.add_argument('--k8s-ca-base64', required=False, help='base64-encoded K8S certificate authority')
+arguments_connection.add_argument('--k8s-token', required=False, help='K8S token to use')
 
 parser_deploy = subparsers.add_parser('deploy', parents=[parser_provisioning, parser_target],
                                       help='Sub command for deploy app')
@@ -72,10 +77,10 @@ def main():
 
     if deprecation_warnings or unrecognized_args:
         log.warning("Explicit true/false arguments to --sync-mode and --dry-run keys are deprecated "
-                    "and will be removed in the future. Use these keys without arguments instead.")
+                    "and will be discontinued in the future. Use these keys without arguments instead.")
 
-    # it's handy to operate with args as with dictionary
     args = vars(args)
+    kubeconfig_namespace = None
     settings.CHECK_STATUS_TRIES = args.get('tries')
     settings.CHECK_DAEMONSET_STATUS_TRIES = args.get('tries')
     settings.CHECK_STATUS_TIMEOUT = args.get('retry_delay')
@@ -88,29 +93,34 @@ def main():
         context = config.load_context_section(args['section'])
         render = templating.Renderer(settings.TEMPLATES_DIR)
         resources = render.generate_by_context(context)
-        # INFO rvadim: https://github.com/kubernetes-client/python/issues/430#issuecomment-359483997
+        evaluator = config.PriorityEvaluator(args, context, os.environ)
+
+        if evaluator.environment_deprecated():
+            log.warning("K8S_HOST and K8S_CA environment variables support is deprecated "
+                        "and will be discontinued in the future. Use K8S_MASTER_URI and K8S_CA_BASE64 instead.")
 
         if args.get('dry_run'):
             return
 
+        # INFO rvadim: https://github.com/kubernetes-client/python/issues/430#issuecomment-359483997
         if args.get('use_kubeconfig'):
-            load_kube_config()
-            namespace = list_kube_config_contexts()[1].get('context').get('namespace')
-
-            if not namespace:
-                raise RuntimeError("Unable to determine namespace of current context")
-
-            settings.K8S_NAMESPACE = namespace
+            try:
+                load_kube_config()
+                kubeconfig_namespace = list_kube_config_contexts()[1].get('context').get('namespace')
+            except Exception as e:
+                raise RuntimeError(e)
         else:
-            Configuration.set_default(get_client_config(context))
-            check_required_vars(context, ['k8s_master_uri', 'k8s_token', 'k8s_ca_base64', 'k8s_namespace'])
+            client.Configuration.set_default(evaluator.k8s_client_configuration())
 
-        if context.get('k8s_namespace'):
-            settings.K8S_NAMESPACE = context.get('k8s_namespace')
-
+        settings.K8S_NAMESPACE = evaluator.k8s_namespace_default(kubeconfig_namespace)
         log.info('Default namespace "{}"'.format(settings.K8S_NAMESPACE))
+
+        if not settings.K8S_NAMESPACE:
+            log.info("Default namespace is not set. "
+                     "This may lead to provisioning error, if namespace is not set for each resource.")
+
         p = Provisioner(args['command'], args.get('sync_mode'), args.get('show-logs'))
-        d = ApiDeprecationChecker(VersionApi().get_code().git_version[1:])
+        d = ApiDeprecationChecker(client.VersionApi().get_code().git_version[1:])
 
         for resource in resources:
             d.run(resource)

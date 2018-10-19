@@ -15,18 +15,96 @@ log = logging.getLogger(__name__)
 INCLUDE_RE = re.compile('{{\s?file\s?=\s?\'(?P<file>[^\']*)\'\s?}}')
 CUSTOM_ENV_RE = re.compile('^(?P<prefix>.*){{\s*env\s*=\s*\'(?P<env>[^\']*)\'\s*}}(?P<postfix>.*)$')  # noqa
 
+KEY_USE_KUBECONFIG = 'use_kubeconfig'
+KEY_K8S_MASTER_URI = 'k8s_master_uri'
+KEY_K8S_MASTER_URI_ENV = KEY_K8S_MASTER_URI.upper()
+KEY_K8S_MASTER_URI_ENV_DEPRECATED = 'K8S_HOST'
 
-def get_client_config(context):
-    c = client.Configuration()
-    c.host = context.get('k8s_master_uri')
-    c.ssl_ca_cert = write_file_tmp(b64decode(context.get('k8s_ca_base64')).encode('utf-8'))
-    c.api_key = {"authorization": "Bearer " + context.get('k8s_token')}
-    if 'k8s_handle_debug' in context:
-        if context['k8s_handle_debug'] is True \
-                or context['k8s_handle_debug'] == 'true' \
-                or context['k8s_handle_debug'] == 'True':
-            c.debug = True
-    return c
+KEY_K8S_CA_BASE64 = 'k8s_ca_base64'
+KEY_K8S_CA_BASE64_ENV = KEY_K8S_CA_BASE64.upper()
+KEY_K8S_CA_BASE64_URI_ENV_DEPRECATED = 'K8S_CA'
+
+KEY_K8S_TOKEN = 'k8s_token'
+KEY_K8S_TOKEN_ENV = KEY_K8S_TOKEN.upper()
+
+KEY_K8S_NAMESPACE = 'k8s_namespace'
+KEY_K8S_NAMESPACE_ENV = KEY_K8S_NAMESPACE.upper()
+KEY_K8S_HANDLE_DEBUG = 'k8s_handle_debug'
+
+
+class PriorityEvaluator:
+    def __init__(self, cli_arguments, context_arguments, environment):
+        self.cli_arguments = cli_arguments
+        self.context_arguments = context_arguments
+        self.environment = environment
+        self.loaded = False
+
+    def k8s_namespace_default(self, kubeconfig_namespace=None):
+        return PriorityEvaluator._first(
+            self.context_arguments.get(KEY_K8S_NAMESPACE),
+            kubeconfig_namespace,
+            self.environment.get(KEY_K8S_NAMESPACE_ENV))
+
+    def k8s_client_configuration(self):
+        for parameter, value in {
+            KEY_K8S_MASTER_URI: self._k8s_master_uri(),
+            KEY_K8S_CA_BASE64: self._k8s_ca_base64(),
+            KEY_K8S_TOKEN: self._k8s_token()
+        }.items():
+            if value:
+                continue
+
+            raise RuntimeError(
+                '{0} parameter is not set. Please, provide {0} via CLI, config or env.'.format(parameter))
+
+        configuration = client.Configuration()
+        configuration.host = self._k8s_master_uri()
+        configuration.ssl_ca_cert = write_file_tmp(b64decode(self._k8s_ca_base64()).encode('utf-8'))
+        configuration.api_key = {"authorization": "Bearer " + self._k8s_token()}
+        configuration.debug = self._k8s_handle_debug()
+        return configuration
+
+    def environment_deprecated(self):
+        return self.environment.get(KEY_K8S_MASTER_URI_ENV_DEPRECATED) or \
+               self.environment.get(KEY_K8S_CA_BASE64_URI_ENV_DEPRECATED)
+
+    def _k8s_master_uri(self):
+        return PriorityEvaluator._first(
+            self.cli_arguments.get(KEY_K8S_MASTER_URI),
+            self.context_arguments.get(KEY_K8S_MASTER_URI),
+            self.environment.get(KEY_K8S_MASTER_URI_ENV),
+            self.environment.get(KEY_K8S_MASTER_URI_ENV_DEPRECATED))
+
+    def _k8s_ca_base64(self):
+        return PriorityEvaluator._first(
+            self.cli_arguments.get(KEY_K8S_CA_BASE64),
+            self.context_arguments.get(KEY_K8S_CA_BASE64),
+            self.environment.get(KEY_K8S_CA_BASE64_ENV),
+            self.environment.get(KEY_K8S_CA_BASE64_URI_ENV_DEPRECATED))
+
+    def _k8s_token(self):
+        return PriorityEvaluator._first(
+            self.cli_arguments.get(KEY_K8S_TOKEN),
+            self.context_arguments.get(KEY_K8S_TOKEN),
+            self.environment.get(KEY_K8S_CA_BASE64_ENV))
+
+    def _k8s_handle_debug(self):
+        return PriorityEvaluator._first(
+            self.cli_arguments.get(KEY_K8S_HANDLE_DEBUG),
+            self.context_arguments.get(KEY_K8S_HANDLE_DEBUG) in [True, 'true', 'True'])
+
+    @staticmethod
+    def _first(*arguments):
+        if not arguments:
+            return None
+
+        for argument in arguments:
+            if not argument:
+                continue
+
+            return argument
+
+        return None
 
 
 def _process_variable(variable):
@@ -126,16 +204,3 @@ def validate_dashes(context):
     if len(dashes) != 0:
         raise RuntimeError('Variable names should never include dashes, '
                            'check your vars, please: {}'.format(', '.join(sorted(dashes))))
-
-
-def check_required_vars(context_dict, required_vars):
-    missing_vars = []
-    for v in required_vars:
-        if v not in context_dict or context_dict[v] == '' or context_dict[v] is None:
-            missing_vars.append(v)
-
-    if len(missing_vars) != 0:
-        raise RuntimeError(
-            'Variables "{}" not found (or empty) in config file "{}". '
-            'Please, set all required variables: {}.'.format(', '.join(missing_vars), settings.CONFIG_FILE,
-                                                             ', '.join(required_vars)))

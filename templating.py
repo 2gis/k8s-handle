@@ -3,6 +3,7 @@ import base64
 import logging
 import yaml
 import settings
+from hashlib import sha256
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from jinja2.exceptions import TemplateNotFound, UndefinedError, TemplateSyntaxError
 
@@ -46,12 +47,19 @@ def b64encode(string):
     return res.decode()
 
 
+def hash_sha256(string):
+    res = sha256()
+    res.update(string.encode('utf-8'))
+    return res.hexdigest()
+
+
 def get_env(templates_dir):
     env = Environment(
         undefined=StrictUndefined,
         loader=FileSystemLoader([templates_dir]))
     env.filters['b64decode'] = b64decode
     env.filters['b64encode'] = b64encode
+    env.filters['hash_sha256'] = hash_sha256
     log.debug('Available templates in path {}: {}'.format(templates_dir, env.list_templates()))
     return env
 

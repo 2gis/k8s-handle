@@ -12,8 +12,8 @@ from templating import b64decode
 
 log = logging.getLogger(__name__)
 
-INCLUDE_RE = re.compile('{{\s?file\s?=\s?\'(?P<file>[^\']*)\'\s?}}')
-CUSTOM_ENV_RE = re.compile('^(?P<prefix>.*){{\s*env\s*=\s*\'(?P<env>[^\']*)\'\s*}}(?P<postfix>.*)$')  # noqa
+INCLUDE_RE = re.compile(r'{{\s?file\s?=\s?\'(?P<file>[^\']*)\'\s?}}')
+CUSTOM_ENV_RE = re.compile(r'^(?P<prefix>.*){{\s*env\s*=\s*\'(?P<env>[^\']*)\'\s*}}(?P<postfix>.*)$')  # noqa
 
 KEY_USE_KUBECONFIG = 'use_kubeconfig'
 KEY_K8S_MASTER_URI = 'k8s_master_uri'
@@ -171,7 +171,8 @@ def load_context_section(section):
         raise RuntimeError('Section "{}" not found in config file "{}"'.format(section, settings.CONFIG_FILE))
 
     # delete all sections except common and used section
-    context = {key: context[key] for key in ['common', section]}
+    context.setdefault(settings.COMMON_SECTION_NAME, {})
+    context = {key: context[key] for key in [settings.COMMON_SECTION_NAME, section]}
     context = _update_context_recursively(context)
 
     if section and section in context:

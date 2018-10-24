@@ -95,7 +95,7 @@ class Renderer:
                 path = self._generate_file(template, settings.TEMP_DIR, context)
                 log.info('File "{}" successfully generated'.format(path))
                 output.append(path)
-            except TemplateNotFound as e:
+            except TemplateNotFound:
                 raise TemplateRenderingError('Template "{}" not found'.format(template))
             except (UndefinedError, TemplateSyntaxError) as e:
                 raise TemplateRenderingError('Unable to render {}, due to: {}'.format(template, e))

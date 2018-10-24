@@ -24,7 +24,7 @@ def _split_str_by_capital_letters(item):
     # upper the first letter
     item = item[0].upper() + item[1:]
     # transform 'Service' to 'service', 'CronJob' to 'cron_job', 'TargetPort' to 'target_port', etc.
-    return '_'.join(re.findall('[A-Z][^A-Z]*', item)).lower()
+    return '_'.join(re.findall(r'[A-Z][^A-Z]*', item)).lower()
 
 
 class Provisioner:
@@ -63,7 +63,7 @@ class Provisioner:
         return '{}'.format(port.port)
 
     def _notify_about_missing_items_in_template(self, items, missing_type):
-        skull = """
+        skull = r"""
        ___
     .-'   `-.
    /  \   /  \\     Please pay attention to service {type}s!

@@ -34,6 +34,8 @@ parser_provisioning.add_argument('--tries', type=int, required=False, default=36
                                  help='Count of tries to check deployment status')
 parser_provisioning.add_argument('--retry-delay', type=int, required=False, default=5,
                                  help='Sleep between tries in seconds')
+parser_provisioning.add_argument('--strict', action='store_true', required=False,
+                                 help='Check existence of all env variables in config.yaml and stop if var is not set')
 parser_provisioning.add_argument('--use-kubeconfig', action='store_true', required=False,
                                  help='Try to use kube config')
 parser_provisioning.add_argument('--k8s-handle-debug', action='store_true', required=False,
@@ -46,8 +48,6 @@ arguments_connection.add_argument('--k8s-token', required=False, help='K8S token
 
 parser_deploy = subparsers.add_parser('deploy', parents=[parser_provisioning, parser_target],
                                       help='Sub command for deploy app')
-parser_deploy.add_argument('--strict', action='store_true', required=False,
-                           help='Check existence of all env variables in config.yaml and stop deploy if var is not set')
 parser_deploy.add_argument('--show-logs', action='store_true', required=False, default=False, help='Show logs for jobs')
 parser_deploy.add_argument('--tail-lines', type=int, required=False, help='Lines of recent log file to display')
 

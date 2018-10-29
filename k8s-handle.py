@@ -119,7 +119,7 @@ def main():
             log.info("Default namespace is not set. "
                      "This may lead to provisioning error, if namespace is not set for each resource.")
 
-        p = Provisioner(args['command'], args.get('sync_mode'), args.get('show-logs'))
+        p = Provisioner(args['command'], args.get('sync_mode'), args.get('show_logs'))
         d = ApiDeprecationChecker(client.VersionApi().get_code().git_version[1:])
 
         for resource in resources:

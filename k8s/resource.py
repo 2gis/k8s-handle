@@ -10,7 +10,7 @@ from kubernetes.client.models.v1_resource_requirements import V1ResourceRequirem
 from kubernetes.client.rest import ApiException
 
 import settings
-from templating import get_template_context
+from templating import get_template_contexts
 from .mocks import K8sClientMock
 
 log = logging.getLogger(__name__)
@@ -150,9 +150,9 @@ class Provisioner:
 
     def run(self, file_path):
         if self.command == 'deploy':
-            self._deploy(file_path)
+            self._deploy_all(file_path)
         if self.command == 'destroy':
-            self._destroy(file_path)
+            self._destroy_all(file_path)
 
     def _is_pvc_specs_equals(self, old_obj, new_dict):
         for new_key in new_dict.keys():
@@ -181,8 +181,11 @@ class Provisioner:
 
         return True
 
-    def _deploy(self, file_path):
-        template_body = get_template_context(file_path)
+    def _deploy_all(self, file_path):
+        for template_body in get_template_contexts(file_path):
+            self._deploy(template_body, file_path)
+
+    def _deploy(self, template_body, file_path):
         kube_client = Adapter(template_body)
         log.info('Using namespace "{}"'.format(kube_client.namespace))
 
@@ -264,8 +267,11 @@ class Provisioner:
                 for pod_container in pod_containers:
                     log.info('\n{}'.format(kube_client.read_pod_logs(pod_name, pod_container)))
 
-    def _destroy(self, file_path):
-        template_body = get_template_context(file_path)
+    def _destroy_all(self, file_path):
+        for template_body in get_template_contexts(file_path):
+            self._destroy(template_body, file_path)
+
+    def _destroy(self, template_body, file_path):
         kube_client = Adapter(template_body)
         log.info('Using namespace "{}"'.format(kube_client.namespace))
         log.info('Trying to delete {} "{}"'.format(template_body['kind'], kube_client.name))

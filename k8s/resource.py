@@ -439,6 +439,8 @@ class Adapter:
             return client.AppsV1Api()
         if api_version == 'autoscaling/v1':
             return client.AutoscalingV1Api()
+        if api_version == 'rbac.authorization.k8s.io/v1':
+            return client.RbacAuthorizationV1Api()
         if api_version == 'test/test':
             return K8sClientMock(self.name)
 
@@ -447,14 +449,15 @@ class Adapter:
         if kind not in ['ConfigMap', 'CronJob', 'DaemonSet', 'Deployment', 'Endpoints',
                         'Ingress', 'Job', 'Namespace', 'PodDisruptionBudget', 'ResourceQuota',
                         'Secret', 'Service', 'ServiceAccount', 'StatefulSet', 'StorageClass',
-                        'PersistentVolume', 'PersistentVolumeClaim', 'HorizontalPodAutoscaler']:
+                        'PersistentVolume', 'PersistentVolumeClaim', 'HorizontalPodAutoscaler',
+                        'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding']:
             raise RuntimeError('Unknown kind "{}" in generated file'.format(kind))
 
         return _split_str_by_capital_letters(kind)
 
     def get(self):
         try:
-            if self.kind in ['namespace', 'storage_class', 'persistent_volume', ]:
+            if self.kind in ['namespace', 'storage_class', 'persistent_volume', 'cluster_role', 'cluster_role_binding']:
                 response = getattr(self.api, 'read_{}'.format(self.kind))(self.name)
             else:
                 response = getattr(self.api, 'read_namespaced_{}'.format(self.kind))(
@@ -505,7 +508,7 @@ class Adapter:
 
     def create(self):
         try:
-            if self.kind in ['namespace', 'storage_class', 'persistent_volume', ]:
+            if self.kind in ['namespace', 'storage_class', 'persistent_volume', 'cluster_role', 'cluster_role_binding']:
                 return getattr(self.api, 'create_{}'.format(self.kind))(body=self.body)
 
             return getattr(self.api, 'create_namespaced_{}'.format(self.kind))(
@@ -528,7 +531,7 @@ class Adapter:
                     name=self.name, body=self.body, namespace=self.namespace
                 )
 
-            if self.kind in ['namespace', 'storage_class', 'persistent_volume', ]:
+            if self.kind in ['namespace', 'storage_class', 'persistent_volume', 'cluster_role', 'cluster_role_binding']:
                 return getattr(self.api, 'replace_{}'.format(self.kind))(
                     name=self.name, body=self.body)
 
@@ -543,7 +546,7 @@ class Adapter:
             if self.kind in ['service', ]:
                 return self.api.delete_namespaced_service(name=self.name, namespace=self.namespace,
                                                           body=client.V1DeleteOptions(propagation_policy='Foreground'))
-            if self.kind in ['namespace', 'storage_class', 'persistent_volume']:
+            if self.kind in ['namespace', 'storage_class', 'persistent_volume', 'cluster_role', 'cluster_role_binding']:
                 return getattr(self.api, 'delete_{}'.format(self.kind))(
                     name=self.name, body=client.V1DeleteOptions(propagation_policy='Foreground'))
 

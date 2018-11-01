@@ -2,7 +2,7 @@ import logging
 
 import semver
 
-from templating import get_template_context
+from templating import get_template_contexts
 
 log = logging.getLogger(__name__)
 
@@ -73,8 +73,8 @@ class ApiDeprecationChecker:
         return False
 
     def run(self, file_path):
-        template_body = get_template_context(file_path)
-        self._is_deprecated(
-            template_body.get('apiVersion'),
-            template_body.get('kind'),
-        )
+        for template_body in get_template_contexts(file_path):
+            self._is_deprecated(
+                template_body.get('apiVersion'),
+                template_body.get('kind'),
+            )

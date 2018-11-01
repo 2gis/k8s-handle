@@ -15,26 +15,28 @@ class TemplateRenderingError(Exception):
 log = logging.getLogger(__name__)
 
 
-def get_template_context(file_path):
+def get_template_contexts(file_path):
     with open(file_path) as f:
         try:
-            context = yaml.load(f.read())
+            contexts = yaml.load_all(f.read())
         except Exception as e:
             raise RuntimeError('Unable to load yaml file: {}, {}'.format(file_path, e))
-        if context is None:
-            raise RuntimeError('File "{}" is empty'.format(file_path))
-        if 'kind' not in context or context['kind'] is None:
-            raise RuntimeError('Field "kind" not found (or empty) in file "{}"'.format(file_path))
-        if 'metadata' not in context or context['metadata'] is None:
-            raise RuntimeError('Field "metadata" not found (or empty) in file "{}"'.format(file_path))
-        if 'name' not in context['metadata'] or context['metadata']['name'] is None:
-            raise RuntimeError('Field "metadata->name" not found (or empty) in file "{}"'.format(file_path))
-        if 'spec' in context:
-            # INFO: Set replicas = 1 by default for replaces cases in Deployment and StatefulSet
-            if 'replicas' not in context['spec'] or context['spec']['replicas'] is None:
-                if context['kind'] in ['Deployment', 'StatefulSet']:
-                    context['spec']['replicas'] = 1
-        return context
+
+        for context in contexts:
+            if context is None:
+                continue  # Skip empty YAML documents
+            if 'kind' not in context or context['kind'] is None:
+                raise RuntimeError('Field "kind" not found (or empty) in file "{}"'.format(file_path))
+            if 'metadata' not in context or context['metadata'] is None:
+                raise RuntimeError('Field "metadata" not found (or empty) in file "{}"'.format(file_path))
+            if 'name' not in context['metadata'] or context['metadata']['name'] is None:
+                raise RuntimeError('Field "metadata->name" not found (or empty) in file "{}"'.format(file_path))
+            if 'spec' in context:
+                # INFO: Set replicas = 1 by default for replaces cases in Deployment and StatefulSet
+                if 'replicas' not in context['spec'] or context['spec']['replicas'] is None:
+                    if context['kind'] in ['Deployment', 'StatefulSet']:
+                        context['spec']['replicas'] = 1
+            yield context
 
 
 def b64decode(string):

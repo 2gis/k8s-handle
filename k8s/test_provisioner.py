@@ -1,7 +1,7 @@
 import unittest
 
 import settings
-from templating import get_template_context
+from templating import get_template_contexts
 from .mocks import K8sClientMock
 from .mocks import ServiceMetadata
 from .mocks import ServicePort
@@ -339,36 +339,35 @@ class TestProvisioner(unittest.TestCase):
         self.assertTrue('Replace persistent volume claim fail'
                         in str(context.exception))
 
-    def test_get_template_context(self):
-        with self.assertRaises(RuntimeError) as context:
-            get_template_context('k8s/fixtures/empty.yaml')
-        self.assertTrue('File "k8s/fixtures/empty.yaml" is empty' in str(context.exception), context.exception)
+    def test_get_template_contexts(self):
+        with self.assertRaises(StopIteration):
+            next(get_template_contexts('k8s/fixtures/empty.yaml'))
 
         with self.assertRaises(RuntimeError) as context:
-            get_template_context('k8s/fixtures/nokind.yaml')
+            next(get_template_contexts('k8s/fixtures/nokind.yaml'))
         self.assertTrue(
             'Field "kind" not found (or empty) in file "k8s/fixtures/nokind.yaml"' in str(context.exception),
             context.exception)
 
         with self.assertRaises(RuntimeError) as context:
-            get_template_context('k8s/fixtures/nometadata.yaml')
+            next(get_template_contexts('k8s/fixtures/nometadata.yaml'))
         self.assertTrue(
             'Field "metadata" not found (or empty) in file "k8s/fixtures/nometadata.yaml"' in str(context.exception),
             context.exception)
 
         with self.assertRaises(RuntimeError) as context:
-            get_template_context('k8s/fixtures/nometadataname.yaml')
+            next(get_template_contexts('k8s/fixtures/nometadataname.yaml'))
         self.assertTrue(
             'Field "metadata->name" not found (or empty) in file "k8s/fixtures/nometadataname.yaml"'
             in str(context.exception), context.exception)
 
-        context = get_template_context('k8s/fixtures/valid.yaml')
+        context = next(get_template_contexts('k8s/fixtures/valid.yaml'))
         self.assertEqual(context.get('kind'), 'Service')
         self.assertEqual(context.get('apiVersion'), 'v1')
         self.assertEqual(context.get('metadata').get('name'), 'my-service')
         self.assertEqual(context.get('spec').get('selector').get('app'), 'my-app')
 
-        context = get_template_context('k8s/fixtures/deployment_wo_replicas.yaml')
+        context = next(get_template_contexts('k8s/fixtures/deployment_wo_replicas.yaml'))
         self.assertEqual(context.get('spec').get('replicas'), 1)
 
 

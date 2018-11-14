@@ -262,6 +262,17 @@ In Gitlab CI for example you can create manual job for each environment
 Templates in k8s-handle use jinja2 syntax and support all standard filters + some special:
 * {{ my_var | b64encode }} - encode value of my_var to base64
 * {{ my_var | b64decode }} - decode value of my_var from base64
+* {{ my_var | hash_sha256 }} - encode value of my_var to sha256sum
+Also global function
+* {{ include_file('my_file.txt') }} - include my_file.txt to resulting resource w/o parsing it, useful for include configs to configmap.
+my_file.txt will be searched in parent directory of templates dir(most of the time - k8s-handle project dir):
+```bash
+$ ls -1
+config.yaml
+templates
+my_file.txt
+...
+``` 
 > Warning: You can use filters only for templates and can't for config.yaml
 
 You can put *.j2 templates in 'templates' directory and specify it in config.yaml

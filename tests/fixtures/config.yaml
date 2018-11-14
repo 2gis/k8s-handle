@@ -31,6 +31,7 @@ test_dirs:
     - template: template1.yaml.j2
     - template: template2.yaml.j2
     - template: template3.yaml.j2
+    - template: template_include_file.yaml.j2
     - template: innerdir/template1.yaml.j2
 
 no_templates:

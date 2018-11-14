@@ -43,6 +43,7 @@ class TestTemplating(unittest.TestCase):
         file_path_2 = '{}/template2.yaml'.format(settings.TEMP_DIR)
         file_path_3 = '{}/template3.yaml'.format(settings.TEMP_DIR)
         file_path_4 = '{}/innerdir/template1.yaml'.format(settings.TEMP_DIR)
+        file_path_5 = '{}/template_include_file.yaml'.format(settings.TEMP_DIR)
         self.assertTrue(os.path.exists(file_path_1))
         self.assertTrue(os.path.exists(file_path_2))
         self.assertTrue(os.path.exists(file_path_3))
@@ -58,6 +59,9 @@ class TestTemplating(unittest.TestCase):
         with open(file_path_4, 'r') as f:
             content = f.read()
         self.assertEqual(content, "{'ha_ha': 'included_var'}")
+        with open(file_path_5, 'r') as f:
+            content = f.read()
+        self.assertEqual(content, "test:\n  {{ hello world }}")
 
     def test_no_templates_in_kubectl(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))

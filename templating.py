@@ -62,6 +62,12 @@ def get_env(templates_dir):
     env.filters['b64decode'] = b64decode
     env.filters['b64encode'] = b64encode
     env.filters['hash_sha256'] = hash_sha256
+
+    # https://stackoverflow.com/questions/9767585/insert-static-files-literally-into-jinja-templates-without-parsing-them
+    def include_file(path):
+        with open(os.path.join(templates_dir, '../', path), 'r') as f:
+            return f.read()
+    env.globals['include_file'] = include_file
     log.debug('Available templates in path {}: {}'.format(templates_dir, env.list_templates()))
     return env
 

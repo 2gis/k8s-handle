@@ -97,3 +97,16 @@ class TestApiDeprecationChecker(unittest.TestCase):
         }
         with self.assertRaises(DeprecationError):
             checker._is_deprecated("test/v1", "Deployment")
+
+    def test_version_no_until(self):
+        checker = ApiDeprecationChecker("1.10.6")
+        checker.deprecated_versions = {
+            "test/v1": {
+                "since": "1.8.0",
+                "until": "",
+                "resources": [
+                    "Deployment",
+                ],
+            }
+        }
+        self.assertTrue(checker._is_deprecated("test/v1", "Deployment"))

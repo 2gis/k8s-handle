@@ -61,7 +61,7 @@ class TestTemplating(unittest.TestCase):
         self.assertEqual(content, "{'ha_ha': 'included_var'}")
         with open(file_path_5, 'r') as f:
             content = f.read()
-        self.assertEqual(content, "test:\n  {{ hello world }}")
+        self.assertEqual(content, "test: |\n  {{ hello world }}\n  new\n  line\n  {{ hello world1 }}\n")
 
     def test_no_templates_in_kubectl(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))

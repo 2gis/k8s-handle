@@ -1,4 +1,5 @@
 import os
+import glob
 import base64
 import logging
 import yaml
@@ -58,8 +59,12 @@ def hash_sha256(string):
 def get_env(templates_dir):
     # https://stackoverflow.com/questions/9767585/insert-static-files-literally-into-jinja-templates-without-parsing-them
     def include_file(path):
-        with open(os.path.join(templates_dir, '../', path), 'r') as f:
-            return f.read()
+        path = os.path.join(templates_dir, '../', path)
+        output = []
+        for file_path in glob.glob(path):
+            with open(file_path, 'r') as f:
+                output.append(f.read())
+        return '\n'.join(output)
     env = Environment(
         undefined=StrictUndefined,
         loader=FileSystemLoader([templates_dir]))

@@ -1,2 +1,2 @@
-test:
-  {{ include_file('templates_tests/my_file.txt') }}
+test: |
+  {{ include_file('templates_tests/my_file*.txt') | indent(2) }}

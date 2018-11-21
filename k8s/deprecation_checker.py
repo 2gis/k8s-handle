@@ -17,7 +17,7 @@ class ApiDeprecationChecker:
         self.deprecated_versions = {
             "extensions/v1beta1": {
                 "since": "1.8.0",
-                "until": "1.11.0",
+                "until": "",
                 "resources": [
                     "Deployment",
                     "DaemonSet",
@@ -46,20 +46,21 @@ class ApiDeprecationChecker:
         if kind not in self.deprecated_versions[api_version].get("resources"):
             return False
 
-        if self._is_server_version_greater(self.deprecated_versions[api_version]["until"]):
-            log.warning(message.format(
-                api_version=api_version,
-                kind=kind,
-                status="unsupported",
-                k8s_version=self.deprecated_versions[api_version]["until"],
-            ))
-            raise DeprecationError(
-                "Version {} for resourse type '{}' is unsupported since kubernetes {}".format(
-                    api_version,
-                    kind,
-                    self.deprecated_versions[api_version]["until"]
+        if self.deprecated_versions[api_version]["until"]:
+            if self._is_server_version_greater(self.deprecated_versions[api_version]["until"]):
+                log.warning(message.format(
+                    api_version=api_version,
+                    kind=kind,
+                    status="unsupported",
+                    k8s_version=self.deprecated_versions[api_version]["until"],
+                ))
+                raise DeprecationError(
+                    "Version {} for resourse type '{}' is unsupported since kubernetes {}".format(
+                        api_version,
+                        kind,
+                        self.deprecated_versions[api_version]["until"]
+                    )
                 )
-            )
 
         if self._is_server_version_greater(self.deprecated_versions[api_version]["since"]):
             log.warning(message.format(

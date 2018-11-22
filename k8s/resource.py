@@ -463,11 +463,11 @@ class Adapter:
 
     def get(self):
         try:
-            if self.kind in ['namespace', 'storage_class', 'persistent_volume', 'cluster_role', 'cluster_role_binding']:
-                response = getattr(self.api, 'read_{}'.format(self.kind))(self.name)
-            else:
+            if hasattr(self.api, "read_namespaced_{}".format(self.kind)):
                 response = getattr(self.api, 'read_namespaced_{}'.format(self.kind))(
                     self.name, namespace=self.namespace)
+            else:
+                response = getattr(self.api, 'read_{}'.format(self.kind))(self.name)
         except ApiException as e:
             if e.reason == 'Not Found':
                 return None
@@ -514,11 +514,11 @@ class Adapter:
 
     def create(self):
         try:
-            if self.kind in ['namespace', 'storage_class', 'persistent_volume', 'cluster_role', 'cluster_role_binding']:
-                return getattr(self.api, 'create_{}'.format(self.kind))(body=self.body)
+            if hasattr(self.api, "create_namespaced_{}".format(self.kind)):
+                return getattr(self.api, 'create_namespaced_{}'.format(self.kind))(
+                    body=self.body, namespace=self.namespace)
 
-            return getattr(self.api, 'create_namespaced_{}'.format(self.kind))(
-                body=self.body, namespace=self.namespace)
+            return getattr(self.api, 'create_{}'.format(self.kind))(body=self.body)
         except ApiException as e:
             log.error('Exception when calling "create_namespaced_{}": {}'.format(self.kind, self._add_indent(e.body)))
             raise ProvisioningError(e)
@@ -537,28 +537,25 @@ class Adapter:
                     name=self.name, body=self.body, namespace=self.namespace
                 )
 
-            if self.kind in ['namespace', 'storage_class', 'persistent_volume', 'cluster_role', 'cluster_role_binding']:
-                return getattr(self.api, 'replace_{}'.format(self.kind))(
-                    name=self.name, body=self.body)
+            if hasattr(self.api, "replace_namespaced_{}".format(self.kind)):
+                return getattr(self.api, 'replace_namespaced_{}'.format(self.kind))(
+                    name=self.name, body=self.body, namespace=self.namespace)
 
-            return getattr(self.api, 'replace_namespaced_{}'.format(self.kind))(
-                name=self.name, body=self.body, namespace=self.namespace)
+            return getattr(self.api, 'replace_{}'.format(self.kind))(
+                name=self.name, body=self.body)
         except ApiException as e:
             log.error('Exception when calling "replace_namespaced_{}": {}'.format(self.kind, self._add_indent(e.body)))
             raise ProvisioningError(e)
 
     def delete(self):
         try:
-            if self.kind in ['service', ]:
-                return self.api.delete_namespaced_service(name=self.name, namespace=self.namespace,
-                                                          body=client.V1DeleteOptions(propagation_policy='Foreground'))
-            if self.kind in ['namespace', 'storage_class', 'persistent_volume', 'cluster_role', 'cluster_role_binding']:
-                return getattr(self.api, 'delete_{}'.format(self.kind))(
-                    name=self.name, body=client.V1DeleteOptions(propagation_policy='Foreground'))
+            if hasattr(self.api, "delete_namespaced_{}".format(self.kind)):
+                return getattr(self.api, 'delete_namespaced_{}'.format(self.kind))(
+                    name=self.name, body=client.V1DeleteOptions(propagation_policy='Foreground'),
+                    namespace=self.namespace)
 
-            return getattr(self.api, 'delete_namespaced_{}'.format(self.kind))(
-                name=self.name, body=client.V1DeleteOptions(propagation_policy='Foreground'),
-                namespace=self.namespace)
+            return getattr(self.api, 'delete_{}'.format(self.kind))(
+                name=self.name, body=client.V1DeleteOptions(propagation_policy='Foreground'))
         except ApiException as e:
             if e.reason == 'Not Found':
                 return None

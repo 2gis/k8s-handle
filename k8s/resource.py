@@ -447,6 +447,8 @@ class Adapter:
             return client.AutoscalingV1Api()
         if api_version == 'rbac.authorization.k8s.io/v1':
             return client.RbacAuthorizationV1Api()
+        if api_version == 'scheduling.k8s.io/v1alpha1':
+            return client.SchedulingV1alpha1Api()
         if api_version == 'test/test':
             return K8sClientMock(self.name)
 
@@ -456,7 +458,8 @@ class Adapter:
                         'Ingress', 'Job', 'Namespace', 'PodDisruptionBudget', 'ResourceQuota',
                         'Secret', 'Service', 'ServiceAccount', 'StatefulSet', 'StorageClass',
                         'PersistentVolume', 'PersistentVolumeClaim', 'HorizontalPodAutoscaler',
-                        'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding']:
+                        'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding',
+                        'PriorityClass']:
             raise RuntimeError('Unknown kind "{}" in generated file'.format(kind))
 
         return _split_str_by_capital_letters(kind)

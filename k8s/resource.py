@@ -449,6 +449,8 @@ class Adapter:
             return client.RbacAuthorizationV1Api()
         if api_version == 'scheduling.k8s.io/v1alpha1':
             return client.SchedulingV1alpha1Api()
+        if api_version == 'scheduling.k8s.io/v1beta1':
+            return client.SchedulingV1beta1Api()
         if api_version == 'test/test':
             return K8sClientMock(self.name)
 

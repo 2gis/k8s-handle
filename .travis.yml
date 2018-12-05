@@ -1,8 +1,20 @@
 sudo: false
-language: python
-python:
-    - "3.6"
-install: pip install tox-travis codecov
-script: tox
-after_success:
-- codecov
+
+jobs:
+  include:
+    - stage: test
+      name: "Unit tests"
+      language: python
+      python:
+        - "3.6"
+      install: pip install tox-travis codecov
+      script: tox
+      after_success:
+        - codecov
+    - stage: test
+      name: "Docker image build test"
+      services:
+        - docker
+      env:
+        - TAG="temp"
+      script: docker-compose build

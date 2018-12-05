@@ -40,6 +40,10 @@ parser_provisioning.add_argument('--use-kubeconfig', action='store_true', requir
                                  help='Try to use kube config')
 parser_provisioning.add_argument('--k8s-handle-debug', action='store_true', required=False,
                                  help='Show K8S client debug messages')
+parser_provisioning.add_argument('--tags', action='append', required=False,
+                                 help='Only use templates tagged with these values')
+parser_provisioning.add_argument('--skip-tags', action='append', required=False,
+                                 help='Only use templates whose tags do not match these values')
 
 arguments_connection = parser_provisioning.add_argument_group()
 arguments_connection.add_argument('--k8s-master-uri', required=False, help='K8S master to connect to')
@@ -86,6 +90,8 @@ def main():
     settings.CHECK_STATUS_TIMEOUT = args.get('retry_delay')
     settings.CHECK_DAEMONSET_STATUS_TIMEOUT = args.get('retry_delay')
     settings.GET_ENVIRON_STRICT = args.get('strict')
+    settings.ONLY_TAGS = args.get('tags')
+    settings.SKIP_TAGS = args.get('skip_tags')
     settings.COUNT_LOG_LINES = args.get('tail_lines')
     settings.CONFIG_FILE = args.get('config') or settings.CONFIG_FILE
 

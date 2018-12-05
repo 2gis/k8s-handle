@@ -308,6 +308,32 @@ production-zone-1:
   templates:
   - template: my-deployment.yaml.j2
 ```
+### Tags
+If you have a large deployment with many separate parts (for ex. main application and migration job), you can want to deploy them independently. In this case you have two options:
+* Use multiple isolated sections (like `production_app`, `production_migration`, etc.)
+* Use one section and tag yours templates. For example:
+    ```yaml
+    production:
+      templates:
+      - template: my-job.yaml.j2
+        tags: migration
+      - template: my-configmap.yaml.j2
+        tags: ['app', 'config']
+      - template: my-deployment.yaml.j2
+        tags:
+        - app
+        - deployment
+      - template: my-service.yaml.j2
+        tags: "app,service"
+    ```
+Since you templates are tagged you can use `--tags`/`--skip-tags` keys to partial deploy. For example, you can delete only a migration job:
+```
+k8s-handle destroy --section production --tags migration
+```
+Command line keys `--tags` and `--skip-tags` can be specified multiple times, for ex.:
+```
+k8s-handle deploy --section production --tags=tag1 --tags=tag2 --tags=tag3
+```
 ## Variables
 ### Required parameters
 k8s-handle needs several parameters to be set in order to connect to k8s, such as:

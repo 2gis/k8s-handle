@@ -258,14 +258,17 @@ class Provisioner:
                 log.warning('Pod not found for showing logs')
                 return
 
-            if self._wait_pod_running(
-                    kube_client,
-                    pod_name,
-                    tries=settings.CHECK_STATUS_TRIES,
-                    timeout=settings.CHECK_STATUS_TIMEOUT):
+            is_successful = self._wait_pod_running(
+                kube_client,
+                pod_name,
+                tries=settings.CHECK_STATUS_TRIES,
+                timeout=settings.CHECK_STATUS_TIMEOUT)
 
-                for pod_container in pod_containers:
-                    log.info('\n{}'.format(kube_client.read_pod_logs(pod_name, pod_container)))
+            for pod_container in pod_containers:
+                log.info('\n{}'.format(kube_client.read_pod_logs(pod_name, pod_container)))
+
+            if not is_successful:
+                raise RuntimeError('Job running failed')
 
     def _destroy_all(self, file_path):
         for template_body in get_template_contexts(file_path):
@@ -389,12 +392,13 @@ class Provisioner:
             status = kube_client.read_pod_status(pod_name)
 
             log.info('Pod "{}" status: {}'.format(pod_name, status.status.phase))
-            if status.status.phase in ['Succeeded', 'Failed', 'Unknown']:
+            if status.status.phase == 'Succeeded':
                 return True
+            if status.status.phase in ['Failed', 'Unknown']:
+                return False
             sleep(timeout)
 
-        log.error('Pod "{}" not completed for {} tries'.format(pod_name, tries))
-        return False
+        raise RuntimeError('Pod "{}" not completed for {} tries'.format(pod_name, tries))
 
     @staticmethod
     def _wait_destruction_complete(kube_client, kind, tries, timeout):

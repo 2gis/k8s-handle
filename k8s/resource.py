@@ -465,7 +465,7 @@ class Adapter:
                         'Secret', 'Service', 'ServiceAccount', 'StatefulSet', 'StorageClass',
                         'PersistentVolume', 'PersistentVolumeClaim', 'HorizontalPodAutoscaler',
                         'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding',
-                        'PriorityClass']:
+                        'PriorityClass', 'PodSecurityPolicy']:
             raise RuntimeError('Unknown kind "{}" in generated file'.format(kind))
 
         return _split_str_by_capital_letters(kind)

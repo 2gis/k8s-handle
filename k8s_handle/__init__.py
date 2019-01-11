@@ -8,12 +8,12 @@ import sys
 from kubernetes import client
 from kubernetes.config import list_kube_config_contexts, load_kube_config
 
-import config
-import settings
-import templating
-from filesystem import InvalidYamlError
-from k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
-from k8s.resource import Provisioner, ProvisioningError
+from k8s_handle import config
+from k8s_handle import settings
+from k8s_handle import templating
+from k8s_handle.filesystem import InvalidYamlError
+from k8s_handle.k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
+from k8s_handle.k8s.resource import Provisioner, ProvisioningError
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, format=settings.LOG_FORMAT, datefmt=settings.LOG_DATE_FORMAT)

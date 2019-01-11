@@ -112,13 +112,15 @@ class TestContextGeneration(unittest.TestCase):
                     'section1-key4': [0, 1, 2, 3],
                     'section1-key5': "{{ env='CUSTOM_ENV' }}",
                     'section1-key6': "{{ file='tests/fixtures/include.yaml' }}",
+                    'section1-key7': "{{ env='CUSTOM_ENV'}} = {{ env='CUSTOM_ENV' }}"
                 }
             },
             'section2': [
                 {},
                 'var2',
                 'var3',
-                '{{ env=\'CUSTOM_ENV\' }}'
+                '{{ env=\'CUSTOM_ENV\' }}',
+                '{{ env=\'CUSTOM_ENV\' }} = {{ env=\'CUSTOM_ENV\' }}'
             ],
             'section3': [0, 1, 2, 3, 4]
         }
@@ -131,13 +133,15 @@ class TestContextGeneration(unittest.TestCase):
                     'section1-key4': [0, 1, 2, 3],
                     'section1-key5': 'My value',
                     'section1-key6': {'ha_ha': 'included_var'},
+                    'section1-key7': 'My value = My value'
                 }
             },
             'section2': [
                 {},
                 'var2',
                 'var3',
-                'My value'
+                'My value',
+                'My value = My value'
             ],
             'section3': [0, 1, 2, 3, 4]
         }

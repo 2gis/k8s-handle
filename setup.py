@@ -26,11 +26,5 @@ setup(name='k8s-handle',
               "k8s-handle=k8s_handle:main",
           ]
       },
-      install_requires=[
-          'requests>=2.20.1',
-          'jinja2>=2.10',
-          'PyYAML>=4.2b4',
-          'kubernetes>=6.0.0',
-          'semver>=2.8.1',
-      ],
+      install_requires=get_content('requirements.txt').split('\n'),
       zip_safe=False)

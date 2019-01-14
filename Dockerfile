@@ -7,10 +7,9 @@ LABEL description="Image with k8s-handle" \
 ADD . /opt/k8s-handle/
 
 RUN apk --no-cache add git ca-certificates bash openssl gcc libc-dev libffi-dev openssl-dev make \
-    && pip install -r /opt/k8s-handle/requirements.txt \
-    && apk del gcc libc-dev libffi-dev openssl-dev \
-    && chmod +x /opt/k8s-handle/k8s-handle.py \
-    && ln -s /opt/k8s-handle/k8s-handle.py /opt/k8s-handle/k8s-handle
+    && cd /opt/k8s-handle \
+    && python setup.py install \
+    && apk del gcc libc-dev libffi-dev openssl-dev
 
 ENV PATH="/opt/k8s-handle:${PATH}"
 

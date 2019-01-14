@@ -1,6 +1,6 @@
 import unittest
 
-import dictionary
+from k8s_handle import dictionary
 
 
 class TestDictionaryMerge(unittest.TestCase):

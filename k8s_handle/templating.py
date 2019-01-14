@@ -3,7 +3,7 @@ import glob
 import base64
 import logging
 import yaml
-import settings
+from k8s_handle import settings
 from hashlib import sha256
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from jinja2.exceptions import TemplateNotFound, UndefinedError, TemplateSyntaxError
@@ -87,10 +87,8 @@ def _create_dir(dir):
 
 
 class Renderer:
-    def __init__(self, templates_dir=None):
+    def __init__(self, templates_dir):
         self._templates_dir = templates_dir
-        if self._templates_dir is None:
-            self._templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
         self._env = get_env(self._templates_dir)
 
     def generate_by_context(self, context):

@@ -2,7 +2,7 @@ import logging
 
 import semver
 
-from templating import get_template_contexts
+from k8s_handle.templating import get_template_contexts
 
 log = logging.getLogger(__name__)
 

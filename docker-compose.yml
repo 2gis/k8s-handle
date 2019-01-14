@@ -1,7 +1,7 @@
-version: '2'
+version: '3'
 services:
   k8s-handle:
     build:
       context: .
       dockerfile: Dockerfile
-    image: 2gis/k8s-handle:${TAG}
+    image: 2gis/k8s-handle:${TAG:-latest}

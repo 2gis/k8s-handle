@@ -9,8 +9,8 @@ from kubernetes.client.models.v1_label_selector_requirement import V1LabelSelect
 from kubernetes.client.models.v1_resource_requirements import V1ResourceRequirements
 from kubernetes.client.rest import ApiException
 
-import settings
-from templating import get_template_contexts
+from k8s_handle import settings
+from k8s_handle.templating import get_template_contexts
 from .mocks import K8sClientMock
 
 log = logging.getLogger(__name__)

@@ -5,10 +5,10 @@ import re
 
 from kubernetes import client
 
-import settings
-from dictionary import merge
-from filesystem import load_yaml, write_file_tmp
-from templating import b64decode
+from k8s_handle import settings
+from k8s_handle.dictionary import merge
+from k8s_handle.filesystem import load_yaml, write_file_tmp
+from k8s_handle.templating import b64decode
 
 log = logging.getLogger(__name__)
 

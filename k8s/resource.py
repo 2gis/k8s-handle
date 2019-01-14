@@ -217,13 +217,13 @@ class Provisioner:
                 resource = kube_client.get()
                 if self._is_pvc_specs_equals(resource.spec, template_body['spec']):
                     log.info('PersistentVolumeClaim is not changed')
-                    return True
+                    return
 
             if template_body['kind'] == 'PersistentVolume':
                 resource = kube_client.get()
                 if resource.status.phase in ['Bound', 'Released']:
                     log.warning('PersistentVolume has "{}" status, skip replacing'.format(resource.status.phase))
-                    return True
+                    return
 
             kube_client.replace(apply_ports)
 

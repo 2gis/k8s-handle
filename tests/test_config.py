@@ -2,12 +2,18 @@ import os
 import shutil
 import unittest
 
-import config
-import settings
-from config import KEY_K8S_CA_BASE64, KEY_K8S_MASTER_URI, KEY_K8S_NAMESPACE, KEY_K8S_NAMESPACE_ENV, KEY_K8S_TOKEN
-from config import KEY_K8S_CA_BASE64_URI_ENV_DEPRECATED, KEY_K8S_HANDLE_DEBUG, KEY_K8S_MASTER_URI_ENV_DEPRECATED
-from config import PriorityEvaluator
-from filesystem import InvalidYamlError
+from k8s_handle import config
+from k8s_handle import settings
+from k8s_handle.config import KEY_K8S_CA_BASE64
+from k8s_handle.config import KEY_K8S_MASTER_URI
+from k8s_handle.config import KEY_K8S_NAMESPACE
+from k8s_handle.config import KEY_K8S_NAMESPACE_ENV
+from k8s_handle.config import KEY_K8S_TOKEN
+from k8s_handle.config import KEY_K8S_CA_BASE64_URI_ENV_DEPRECATED
+from k8s_handle.config import KEY_K8S_HANDLE_DEBUG
+from k8s_handle.config import KEY_K8S_MASTER_URI_ENV_DEPRECATED
+from k8s_handle.config import PriorityEvaluator
+from k8s_handle.filesystem import InvalidYamlError
 
 VALUE_CLI = 'value_cli'
 VALUE_CONTEXT = 'value_context'

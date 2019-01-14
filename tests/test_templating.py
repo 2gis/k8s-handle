@@ -1,10 +1,10 @@
 import os
 import shutil
 import unittest
-import settings
-import config
-import templating
-from templating import TemplateRenderingError
+from k8s_handle import settings
+from k8s_handle import config
+from k8s_handle import templating
+from k8s_handle.templating import TemplateRenderingError
 
 
 class TestTemplating(unittest.TestCase):
@@ -22,15 +22,11 @@ class TestTemplating(unittest.TestCase):
         os.environ.pop('K8S_CONFIG_DIR')
 
     def test_renderer_init(self):
-        r = templating.Renderer()
-        expected = os.path.join(os.path.dirname(__file__), '../templates')
-        self.assertEqual(r._templates_dir, os.path.abspath(expected))
-
         r = templating.Renderer('/tmp/test')
         self.assertEqual(r._templates_dir, '/tmp/test')
 
     def test_none_context(self):
-        r = templating.Renderer()
+        r = templating.Renderer('templates')
         with self.assertRaises(RuntimeError) as context:
             r.generate_by_context(None)
         self.assertTrue('Can\'t generate templates from None context' in str(context.exception), str(context.exception))

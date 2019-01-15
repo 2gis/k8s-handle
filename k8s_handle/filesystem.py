@@ -17,7 +17,7 @@ class InvalidYamlError(Exception):
 def load_yaml(path):
     try:
         with open(path) as f:
-            return yaml.load(f.read())
+            return yaml.safe_load(f.read())
     except Exception as e:
         raise InvalidYamlError("file '{}' doesn't contain valid yaml: {}".format(
             path, e))

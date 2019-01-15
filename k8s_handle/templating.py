@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 def get_template_contexts(file_path):
     with open(file_path) as f:
         try:
-            contexts = yaml.load_all(f.read())
+            contexts = yaml.safe_load_all(f.read())
         except Exception as e:
             raise RuntimeError('Unable to load yaml file: {}, {}'.format(file_path, e))
 

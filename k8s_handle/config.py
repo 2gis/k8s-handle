@@ -121,12 +121,10 @@ def _process_variable(variable):
         if settings.GET_ENVIRON_STRICT:
             raise RuntimeError('Environment variable "{}" is not set'.format(err.args[0]))
 
-        return ''
-
     else:
         return from_env
 
-    return variable
+    return re.sub(CUSTOM_ENV_RE, lambda m: os.environ.get(m.group(1), ''), variable)
 
 
 def _update_single_variable(value, include_history):

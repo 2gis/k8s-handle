@@ -117,6 +117,7 @@ def _process_variable(variable):
         from_env = re.sub(CUSTOM_ENV_RE, lambda m: os.environ[m.group(1)], variable)
 
     except KeyError as err:
+        log.debug('Environment variable "{}" is not set', err.args[0])
         if settings.GET_ENVIRON_STRICT:
             raise RuntimeError('Environment variable "{}" is not set'.format(err.args[0]))
 

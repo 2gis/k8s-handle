@@ -118,7 +118,7 @@ class TestContextGeneration(unittest.TestCase):
                     'section1-key4': [0, 1, 2, 3],
                     'section1-key5': "{{ env='CUSTOM_ENV' }}",
                     'section1-key6': "{{ file='tests/fixtures/include.yaml' }}",
-                    'section1-key7': "{{ env='CUSTOM_ENV'}} = {{ env='CUSTOM_ENV' }}"
+                    'section1-key7': "{{ env='CUSTOM_ENV'}} = {{ env='CUSTOM_ENV' }}",
                     'section1-key8': "{{ env='NULL_VAR' }}-{{ env='CUSTOM_ENV' }}"
                 }
             },

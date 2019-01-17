@@ -121,6 +121,8 @@ def _process_variable(variable):
         if settings.GET_ENVIRON_STRICT:
             raise RuntimeError('Environment variable "{}" is not set'.format(err.args[0]))
 
+        return ''
+
     else:
         return from_env
 

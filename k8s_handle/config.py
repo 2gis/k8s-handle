@@ -13,7 +13,7 @@ from k8s_handle.templating import b64decode
 log = logging.getLogger(__name__)
 
 INCLUDE_RE = re.compile(r'{{\s?file\s?=\s?\'(?P<file>[^\']*)\'\s?}}')
-CUSTOM_ENV_RE = re.compile(r'^(?P<prefix>.*){{\s*env\s*=\s*\'(?P<env>[^\']*)\'\s*}}(?P<postfix>.*)$')  # noqa
+CUSTOM_ENV_RE = r'{{\s*env\s*=\s*\'([^\']*)\'\s*}}'
 
 KEY_USE_KUBECONFIG = 'use_kubeconfig'
 KEY_K8S_MASTER_URI = 'k8s_master_uri'
@@ -113,19 +113,15 @@ def _process_variable(variable):
     if matches:
         return load_yaml(matches.groupdict().get('file'))
 
-    matches = CUSTOM_ENV_RE.match(variable)
+    try:
+        return re.sub(CUSTOM_ENV_RE, lambda m: os.environ[m.group(1)], variable)
 
-    if matches:
-        prefix = matches.groupdict().get('prefix')
-        env_var_name = matches.groupdict().get('env')
-        postfix = matches.groupdict().get('postfix')
+    except KeyError as err:
+        log.debug('Environment variable "{}" is not set'.format(err.args[0]))
+        if settings.GET_ENVIRON_STRICT:
+            raise RuntimeError('Environment variable "{}" is not set'.format(err.args[0]))
 
-        if os.environ.get(env_var_name) is None and settings.GET_ENVIRON_STRICT:
-            raise RuntimeError('Environment variable "{}" is not set'.format(env_var_name))
-
-        return prefix + os.environ.get(env_var_name, '') + postfix
-
-    return variable
+    return re.sub(CUSTOM_ENV_RE, lambda m: os.environ.get(m.group(1), ''), variable)
 
 
 def _update_single_variable(value, include_history):

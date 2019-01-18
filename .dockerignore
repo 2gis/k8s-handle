@@ -6,5 +6,10 @@ Dockerfile*
 .gitignore
 .idea/
 .tox/
+.travis.yml
+tox.ini
 __pychache__
 htmlcov/
+tests/
+*.png
+

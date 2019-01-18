@@ -114,15 +114,12 @@ def _process_variable(variable):
         return load_yaml(matches.groupdict().get('file'))
 
     try:
-        from_env = re.sub(CUSTOM_ENV_RE, lambda m: os.environ[m.group(1)], variable)
+        return re.sub(CUSTOM_ENV_RE, lambda m: os.environ[m.group(1)], variable)
 
     except KeyError as err:
         log.debug('Environment variable "{}" is not set'.format(err.args[0]))
         if settings.GET_ENVIRON_STRICT:
             raise RuntimeError('Environment variable "{}" is not set'.format(err.args[0]))
-
-    else:
-        return from_env
 
     return re.sub(CUSTOM_ENV_RE, lambda m: os.environ.get(m.group(1), ''), variable)
 

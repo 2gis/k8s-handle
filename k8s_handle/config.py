@@ -86,7 +86,7 @@ class PriorityEvaluator:
         return PriorityEvaluator._first(
             self.cli_arguments.get(KEY_K8S_TOKEN),
             self.context_arguments.get(KEY_K8S_TOKEN),
-            self.environment.get(KEY_K8S_CA_BASE64_ENV))
+            self.environment.get(KEY_K8S_TOKEN_ENV))
 
     def _k8s_handle_debug(self):
         return PriorityEvaluator._first(

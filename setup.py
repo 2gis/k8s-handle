@@ -12,7 +12,7 @@ def get_content(path):
 
 
 setup(name='k8s-handle',
-      version='0.3.5',
+      version=os.environ.get('RELEASE_TAG', '0.0.0'),
       long_description=get_content(readme_path),
       long_description_content_type='text/markdown',
       description='Provisioning tool for Kubernetes apps',

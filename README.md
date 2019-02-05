@@ -10,6 +10,7 @@ k8s-handle is a helm alternative, but without package manager
 * [Features](#features)
 * [k8s-handle vs helm](#k8s-handle-vs-helm)
 * [Before you begin](#before-you-begin)
+* [Installation with pip](#installation-with-pip)
 * [Usage with docker](#usage-with-docker)
 * [Using with CI/CD tools](#using-with-cicd-tools)
 * [Usage](#usage)
@@ -83,6 +84,13 @@ users:
     token: <your token>
 EOF
 ```
+# Installation with pip
+```
+$ pip install k8s-handle
+ -- or --
+$ pip install --user k8s-handle
+```
+
 
 # Usage with docker
 ```bash
@@ -127,7 +135,7 @@ Notice: If you use Gitlab CI, you can configure [Kubernetes integration](https:/
 
 # Usage
 ```bash
-$ python k8s-handle.py deploy -s staging --use-kubeconfig
+$ k8s-handle deploy -s staging --use-kubeconfig
 INFO:templating:Trying to generate file from template "configmap.yaml.j2" in "/tmp/k8s-handle"
 INFO:templating:File "/tmp/k8s-handle/configmap.yaml" successfully generated
 INFO:templating:Trying to generate file from template "secret.yaml.j2" in "/tmp/k8s-handle"
@@ -157,7 +165,7 @@ k8s-starter-kit   1         1         1            1           3m
 ```
 Now set replicas_count in config.yaml to 3, and run again in sync mode 
 ```bash
-$ python k8s-handle.py deploy -s staging --use-kubeconfig --sync-mode
+$ k8s-handle deploy -s staging --use-kubeconfig --sync-mode
 ...
 INFO:k8s.resource:Deployment "k8s-starter-kit" already exists, replace it
 INFO:k8s.resource:desiredReplicas = 3, updatedReplicas = 3, availableReplicas = 1
@@ -178,7 +186,7 @@ You can start by example https://github.com/2gis/k8s-handle-example. There are n
 $ cd $WORKDIR
 $ git clone https://github.com/2gis/k8s-handle-example.git
 $ cd k8s-handle-example
-$ IMAGE_VERSION=latest k8s-handle-os deploy -s staging --use-kubeconfig --sync-mode
+$ k8s-handle deploy -s staging --use-kubeconfig --sync-mode
 INFO:__main__:Using default namespace k8s-handle-test
 INFO:templating:Trying to generate file from template "configmap.yaml.j2" in "/tmp/k8s-handle"
 INFO:templating:File "/tmp/k8s-handle/configmap.yaml" successfully generated

@@ -12,9 +12,9 @@ def get_content(path):
 
 
 setup(name='k8s-handle',
-      version='0.2.3',
+      version='0.3.5',
       long_description=get_content(readme_path),
-      long_description_content_type="text/markdown",
+      long_description_content_type='text/markdown',
       description='Provisioning tool for Kubernetes apps',
       url='http://github.com/2gis/k8s-handle',
       author='Vadim Reyder',

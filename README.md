@@ -85,6 +85,7 @@ users:
 EOF
 ```
 # Installation with pip
+Required python 3.4 or higher
 ```
 $ pip install k8s-handle
  -- or --

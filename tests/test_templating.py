@@ -101,3 +101,30 @@ class TestTemplating(unittest.TestCase):
             c = config.load_context_section('io_2709')
             r.generate_by_context(c)
         self.assertTrue('due to: \'undefined_variable\' is undefined' in str(context.exception))
+
+    def test_evaluate_tags(self):
+        r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
+        tags = {'tag1', 'tag2', 'tag3'}
+        assert r._evaluate_tags(tags, only_tags=['tag1'], skip_tags=None) is True
+        assert r._evaluate_tags(tags, only_tags=['tag4'], skip_tags=None) is False
+        assert r._evaluate_tags(tags, only_tags=['tag1'], skip_tags=['tag1']) is False
+        assert r._evaluate_tags(tags, only_tags=None, skip_tags=['tag1']) is False
+        assert r._evaluate_tags(tags, only_tags=None, skip_tags=['tag4']) is True
+
+    def test_get_template_tags(self):
+        r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
+        template_1 = {'template': 'template.yaml.j2', 'tags': ['tag1', 'tag2', 'tag3']}
+        template_2 = {'template': 'template.yaml.j2', 'tags': 'tag1,tag2,tag3'}
+        template_3 = {'template': 'template.yaml.j2', 'tags': ['tag1']}
+        template_4 = {'template': 'template.yaml.j2', 'tags': 'tag1'}
+        assert r._get_template_tags(template_1) == {'tag1', 'tag2', 'tag3'}
+        assert r._get_template_tags(template_2) == {'tag1', 'tag2', 'tag3'}
+        assert r._get_template_tags(template_3) == {'tag1'}
+        assert r._get_template_tags(template_4) == {'tag1'}
+
+    def test_get_template_tags_unexpected_type(self):
+        r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
+        template = {'template': 'template.yaml.j2', 'tags': {'tag': 'unexpected'}}
+        with self.assertRaises(TypeError) as context:
+            r._get_template_tags(template)
+        self.assertTrue('unexpected type' in str(context.exception))

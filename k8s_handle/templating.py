@@ -1,6 +1,7 @@
 import os
 import glob
 import base64
+import itertools
 import logging
 import yaml
 from k8s_handle import settings
@@ -101,6 +102,13 @@ class Renderer:
             if len(templates) == 0:
                 return
 
+        templates = filter(
+            lambda i: self._evaluate_tags(self._get_template_tags(i),
+                                          settings.ONLY_TAGS,
+                                          settings.SKIP_TAGS),
+            templates
+        )
+
         output = []
         for template in templates:
             try:
@@ -112,6 +120,37 @@ class Renderer:
             except (UndefinedError, TemplateSyntaxError) as e:
                 raise TemplateRenderingError('Unable to render {}, due to: {}'.format(template, e))
         return output
+
+    def _get_template_tags(self, template):
+        if 'tags' not in template:
+            return set(['untagged'])
+
+        tags = template['tags']
+
+        if isinstance(tags, list):
+            tags = set([i for i, _ in itertools.groupby(tags)])
+        elif isinstance(tags, str):
+            tags = set(tags.split(','))
+        else:
+            raise TypeError('Unable to parse tags of "{}" template: unexpected type {}'.format(template,
+                                                                                               type(tags)))
+
+        return tags
+
+    def _evaluate_tags(self, tags, only_tags, skip_tags):
+        skip = False
+
+        if only_tags:
+            if tags.isdisjoint(only_tags):
+                skip = True
+
+        if skip_tags:
+            if skip:
+                pass  # we decided to skip template already
+            elif not tags.isdisjoint(skip_tags):
+                skip = True
+
+        return not skip
 
     def _generate_file(self, item, dir,  context):
         _create_dir(dir)

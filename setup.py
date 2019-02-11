@@ -21,6 +21,7 @@ setup(name='k8s-handle',
       author_email='vadim.reyder@gmail.com',
       license='Apache 2.0',
       packages=find_packages(exclude=("tests",)),
+      data_files=['requirements.txt'],
       entry_points={
           "console_scripts": [
               "k8s-handle=k8s_handle:main",

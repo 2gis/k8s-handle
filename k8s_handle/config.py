@@ -156,6 +156,9 @@ def _update_context_recursively(context, include_history=[]):
 
 
 def load_context_section(section):
+    if not section:
+        raise RuntimeError('Empty section specification is not allowed')
+
     if section == settings.COMMON_SECTION_NAME:
         raise RuntimeError('Section "{}" is not intended to deploy'.format(settings.COMMON_SECTION_NAME))
 
@@ -163,7 +166,8 @@ def load_context_section(section):
 
     if context is None:
         raise RuntimeError('Config file "{}" is empty'.format(settings.CONFIG_FILE))
-    if section and section not in context:
+
+    if section not in context:
         raise RuntimeError('Section "{}" not found in config file "{}"'.format(section, settings.CONFIG_FILE))
 
     # delete all sections except common and used section

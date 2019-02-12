@@ -65,6 +65,11 @@ class TestContextGeneration(unittest.TestCase):
             config.load_context_section('no_templates_section')
         self.assertTrue('Section "templates" or "kubectl" not found in config file' in str(context.exception))
 
+    def test_empty_section(self):
+        with self.assertRaises(RuntimeError) as context:
+            config.load_context_section('')
+        self.assertEqual('Empty section specification is not allowed', str(context.exception))
+
     def test_common_section(self):
         with self.assertRaises(RuntimeError) as context:
             config.load_context_section(settings.COMMON_SECTION_NAME)

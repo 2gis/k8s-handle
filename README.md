@@ -12,7 +12,7 @@ k8s-handle is a helm alternative, but without package manager
 * [Before you begin](#before-you-begin)
 * [Installation with pip](#installation-with-pip)
 * [Usage with docker](#usage-with-docker)
-* [Using with CI/CD tools](#using-with-cicd-tools)
+* [Usage with CI/CD tools](#usage-with-cicd-tools)
 * [Usage](#usage)
 * [Example](#example)
 * [Docs](#docs)
@@ -31,10 +31,13 @@ k8s-handle is a helm alternative, but without package manager
         * [Native integration](#native-integration)
         * [Through variables](#through-variables)
   * [Working modes](#working-modes)
-     * [Dry run](#dry-run)
      * [Sync mode](#sync-mode)
      * [Strict mode](#strict-mode)
   * [Destroy](#destroy)
+  * [Operating without config.yaml](#operating-without-configyaml)
+     * [Render](#render)
+     * [Apply](#apply)
+     * [Delete](#delete)
   
 # Features
 * Easy to use command line interface
@@ -118,7 +121,7 @@ INFO:k8s.resource:Deployment "k8s-starter-kit" does not exist, create it
        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ```
 
-# Using with CI/CD tools
+# Usage with CI/CD tools
 If you using Gitlab CI, TeamCity or something else, you can use docker runner/agent, script will slightly different: 
 ```bash
 $ k8s-handle deploy -s staging
@@ -214,8 +217,8 @@ Deployed with k8s-handle.
 
 # Docs
 ## Configuration structure
-k8s-handle work with 2 components:
- * conifg.yaml (or any other yaml file through -c argument) store all configuration for deploy
+k8s-handle works with 2 components:
+ * config.yaml (or any other yaml file through -c argument) that stores all configuration for deploy
  * templates catalog, where your can store all required templates for kubernetes resource files (can be changed through
  TEMPLATES_DIR env var)
 
@@ -366,7 +369,7 @@ config.yaml, but you can do it in another way if necessary.
 Thus, the k8s-handle provides flexible ways to set the required parameters. 
 
 ### Merging with common
-All variables defined in common merged with deployed section and available as context dict in templates rendering,
+All variables defined in `common` will be merged with deployed section and available as context dict in templates rendering,
 for example: 
 ```yaml
 common:
@@ -374,12 +377,12 @@ common:
 testing:
   testing_variable: testing_value
 ```
-After rendering this template some-file.txt.j2:
+After the rendering of this template some-file.txt.j2:
 ```txt
 common_var = {{ common_var }}
 testing_variable = {{ testing_variable }}
 ```
-will be generated file some-file.txt with content:
+file some-file.txt will be generated with the following content:
 ```txt
 common_var = common_value
 testing_variable = testing_value
@@ -458,30 +461,6 @@ deploy:
     - k8s-handle deploy --section <section_name>
 ```
 ## Working modes
-### Dry run
-If you want check templates generation and not apply changes to kubernetes use --dry-run function.
-```bash
-$ k8s-handle deploy -s staging --use-kubeconfig --dry-run
-INFO:templating:Trying to generate file from template "configmap.yaml.j2" in "/tmp/k8s-handle"
-INFO:templating:File "/tmp/k8s-handle/configmap.yaml" successfully generated
-INFO:templating:Trying to generate file from template "deployment.yaml.j2" in "/tmp/k8s-handle"
-INFO:templating:File "/tmp/k8s-handle/deployment.yaml" successfully generated
-INFO:templating:Trying to generate file from template "service.yaml.j2" in "/tmp/k8s-handle"
-INFO:templating:File "/tmp/k8s-handle/service.yaml" successfully generated
-$ cat /tmp/k8s-handle/service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: example
-spec:
-  type: NodePort
-  ports:
-    - name: http
-      port: 80
-      targetPort: 80
-  selector:
-    app: example 
-```
 ### Sync mode
 > Works only with Deployment, Job, StatefulSet and DaemonSet
 
@@ -513,8 +492,77 @@ ERROR:__main__:RuntimeError: Environment variable "IMAGE_VERSION" is not set
 $ echo $?
 1
 ```
-## Destroy
+### Destroy
 In some cases you need to destroy early created resources(demo env, deploy from git branches, testing etc.), k8s-handle
 support `destroy` subcommand for you. Just use `destroy` instead of `deploy`. k8s-handle process destroy as deploy, but
 call delete kubernetes api calls instead of create or replace. 
-> Sync mode available for destroy too
+> Sync mode is available for destroy as well.
+
+## Operating without config.yaml
+The most common way for the most of use cases is to operate with k8s-handle via `config.yaml`, specifying
+connection parameters, targets (sections and tags) and variables in one file. The deploy command that runs after that, 
+at first will trigger templating process: filling your spec templates with variables, creating resource spec files.
+That files become a targets for the provisioner module, which does attempts to create K8S resources.
+
+But in some cases, such as the intention to use your own templating engine or, probably, necessity to make specs 
+beforehand and to deploy them separately and later, there may be a need to divide the process into the separate steps:
+1. Templating
+2. Direct, `kubectl apply`-like provisioning without config.yaml context.
+
+For this reason, `k8s-handle render`, `k8s-handle apply`, `k8s-handle delete` commands are implemented.
+
+### Render
+
+`render` command is purposed for creating specs from templates without their subsequent deployment. 
+
+Another purpose is to check the generation of the templates: previously, this functionality was achieved by using the
+`--dry-run` optional flag. The support of `--dry-run` in `deploy` and `destroy` commands remains at this time for the
+sake of backward compatibility but it's **discouraged** for the further usage.
+
+Just like with `deploy` command, `-s/--section` and `--tags`/`--skip-tags` targeting options are provided to make it
+handy to render several specs. Connection parameters are not needed to be specified cause no k8s cluster availability
+checks are performed.
+
+Templates directory path is taken from env `TEMPLATES_DIR` and equal to 'templates' by default.
+Resources generated by this command can be obtained in directory that set in `TEMP_DIR` env variable
+with default value '/tmp/k8s-handle'. Users that want to preserve generated templates might need to change this default 
+to avoid loss of the generated resources.
+
+```
+TEMP_DIR="/home/custom_dir" k8s-handle render -s staging
+2019-02-15 14:44:44 INFO:k8s_handle.templating:Trying to generate file from template "service.yaml.j2" in "/home/custom_dir"
+2019-02-15 14:44:44 INFO:k8s_handle.templating:File "/home/custom_dir/service.yaml" successfully generated
+```
+
+### Apply
+
+`apply` command with the `-r/--resource` required flag starts the process of provisioning of separate resource 
+spec to k8s.
+
+The value of `-r` key is considered as absolute path if it's started with slash. Otherwise, it's considered as
+relative path from directory specified in `TEMP_DIR` env variable.
+
+No config.yaml-like file is required (and not taken into account even if exists). The connection parameters can be set
+via `--use-kubeconfig` mode which is available and the most handy, or via the CLI/env flags and variables.
+Options related to output and syncing, like `--sync-mode`, `--tries` and `--show-logs` are available as well.
+
+```
+$ k8s-handle apply -r /tmp/k8s-handle/service.yaml --use-kubeconfig
+2019-02-15 14:22:58 INFO:k8s_handle:Default namespace "test"
+2019-02-15 14:22:58 INFO:k8s_handle.k8s.resource:Using namespace "test"
+2019-02-15 14:22:58 INFO:k8s_handle.k8s.resource:Service "k8s-handle-example" does not exist, create it
+
+```
+
+### Delete
+`delete` command with the `-r/--resource` required flag acts similarly to `destroy` command and does a try to delete
+ the directly specified resource from k8s if any.
+
+```
+$ k8s-handle delete -r service.yaml --use-kubeconfig
+
+2019-02-15 14:24:06 INFO:k8s_handle:Default namespace "test"
+2019-02-15 14:24:06 INFO:k8s_handle.k8s.resource:Using namespace "test"
+2019-02-15 14:24:06 INFO:k8s_handle.k8s.resource:Trying to delete Service "k8s-handle-example"
+2019-02-15 14:24:06 INFO:k8s_handle.k8s.resource:Service "k8s-handle-example" deleted
+```

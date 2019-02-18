@@ -31,10 +31,13 @@ k8s-handle is a helm alternative, but without package manager
         * [Native integration](#native-integration)
         * [Through variables](#through-variables)
   * [Working modes](#working-modes)
-     * [Dry run](#dry-run)
      * [Sync mode](#sync-mode)
      * [Strict mode](#strict-mode)
   * [Destroy](#destroy)
+  * [Operating without config.yaml](#operating-without-configyaml)
+     * [Render](#render)
+     * [Apply](#apply)
+     * [Delete](#delete)
   
 # Features
 * Easy to use command line interface
@@ -215,7 +218,7 @@ Deployed with k8s-handle.
 # Docs
 ## Configuration structure
 k8s-handle works with 2 components:
- * conifg.yaml (or any other yaml file through -c argument) that stores all configuration for deploy
+ * config.yaml (or any other yaml file through -c argument) that stores all configuration for deploy
  * templates catalog, where your can store all required templates for kubernetes resource files (can be changed through
  TEMPLATES_DIR env var)
 
@@ -506,11 +509,11 @@ beforehand and to deploy them separately and later, there may be a need to divid
 1. Templating
 2. Direct, `kubectl apply`-like provisioning without config.yaml context.
 
-For this reason, `k8s-handle template`, `k8s-handle apply`, `k8s-handle delete` commands are implemented.
+For this reason, `k8s-handle render`, `k8s-handle apply`, `k8s-handle delete` commands are implemented.
 
-### Template
+### Render
 
-`template` command is purposed for creating specs from templates without their subsequent deployment. 
+`render` command is purposed for creating specs from templates without their subsequent deployment. 
 
 Another purpose is to check the generation of the templates: previously, this functionality was achieved by using the
 `--dry-run` optional flag. The support of `--dry-run` in `deploy` and `destroy` commands remains at this time for the
@@ -526,7 +529,7 @@ with default value '/tmp/k8s-handle'. Users that want to preserve generated temp
 to avoid loss of the generated resources.
 
 ```
-TEMP_DIR="/home/custom_dir" k8s-handle template -s staging
+TEMP_DIR="/home/custom_dir" k8s-handle render -s staging
 2019-02-15 14:44:44 INFO:k8s_handle.templating:Trying to generate file from template "service.yaml.j2" in "/home/custom_dir"
 2019-02-15 14:44:44 INFO:k8s_handle.templating:File "/home/custom_dir/service.yaml" successfully generated
 ```

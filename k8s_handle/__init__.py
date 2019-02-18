@@ -38,7 +38,7 @@ def handler_delete(args):
     _handler_apply_delete(args, COMMAND_DESTROY)
 
 
-def handler_template(args):
+def handler_render(args):
     context = config.load_context_section(args.get('section'))
     templating.Renderer(
         settings.TEMPLATES_DIR,
@@ -58,7 +58,7 @@ def _handler_deploy_destroy(args, command):
     if args.get('dry_run'):
         return
 
-    _handler_common(
+    _handler_provision(
         command,
         resources,
         config.PriorityEvaluator(args, context, os.environ),
@@ -69,7 +69,7 @@ def _handler_deploy_destroy(args, command):
 
 
 def _handler_apply_delete(args, command):
-    _handler_common(
+    _handler_provision(
         command,
         [os.path.join(settings.TEMP_DIR, args.get('resource'))],
         config.PriorityEvaluator(args, {}, os.environ),
@@ -79,7 +79,7 @@ def _handler_apply_delete(args, command):
     )
 
 
-def _handler_common(command, resources, priority_evaluator, use_kubeconfig, sync_mode, show_logs):
+def _handler_provision(command, resources, priority_evaluator, use_kubeconfig, sync_mode, show_logs):
     kubeconfig_namespace = None
 
     if priority_evaluator.environment_deprecated():
@@ -159,11 +159,11 @@ arguments_connection.add_argument('--k8s-token', required=False, help='K8S token
 parser_deploy = subparsers.add_parser(
     'deploy',
     parents=[parser_provisioning, parser_target_config, parser_logs, parser_deprecated],
-    help='Do attempt to create and deploy K8S resources of the selected section')
+    help='Do attempt to create specs from templates and deploy K8S resources of the selected section')
 parser_deploy.set_defaults(func=handler_deploy)
 
 parser_apply = subparsers.add_parser('apply', parents=[parser_provisioning, parser_target_resource, parser_logs],
-                                     help='Do attempt to create and deploy K8S resource from the existing spec')
+                                     help='Do attempt to deploy K8S resource from the existing spec')
 parser_apply.set_defaults(func=handler_apply)
 
 parser_destroy = subparsers.add_parser('destroy',
@@ -175,10 +175,10 @@ parser_delete = subparsers.add_parser('delete', parents=[parser_provisioning, pa
                                       help='Do attempt to destroy K8S resource from the existing spec')
 parser_delete.set_defaults(func=handler_delete)
 
-parser_template = subparsers.add_parser('template', parents=[parser_target_config],
+parser_template = subparsers.add_parser('render', parents=[parser_target_config],
                                         help='Make resources from the template and config. '
                                              'Created resources will be placed into the TEMP_DIR')
-parser_template.set_defaults(func=handler_template)
+parser_template.set_defaults(func=handler_render)
 
 
 def main():

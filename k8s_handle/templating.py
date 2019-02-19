@@ -113,8 +113,9 @@ class Renderer:
                 path = self._generate_file(template, settings.TEMP_DIR, context)
                 log.info('File "{}" successfully generated'.format(path))
                 output.append(path)
-            except TemplateNotFound:
-                raise TemplateRenderingError('Template "{}" not found'.format(template))
+            except TemplateNotFound as e:
+                raise TemplateRenderingError(
+                    "Processing {}: template {} hasn't been found".format(template['template'], e.name))
             except (UndefinedError, TemplateSyntaxError) as e:
                 raise TemplateRenderingError('Unable to render {}, due to: {}'.format(template, e))
         return output
@@ -124,8 +125,8 @@ class Renderer:
             log.info('Trying to generate file from template "{}" in "{}"'.format(item['template'], directory))
             template = self._env.get_template(item['template'])
         except TemplateNotFound as e:
-            log.info('Templates path: {}, available templates:{}'.format(self._templates_dir,
-                                                                         self._env.list_templates()))
+            log.info('Templates path: {}, available templates: {}'.format(self._templates_dir,
+                                                                          self._env.list_templates()))
             raise e
         except KeyError:
             raise RuntimeError('Templates section doesn\'t have any template items')

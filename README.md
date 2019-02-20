@@ -287,7 +287,7 @@ templates
 my_file.txt
 ...
 ``` 
-Note, `include_file` also support unix glob. You can import all files from directory conf.d/*.conf for example.
+> Note, `include_file` also support unix glob. You can import all files from directory conf.d/*.conf for example.
 
 You can put *.j2 templates in 'templates' directory and specify it in config.yaml
 ```yaml
@@ -311,6 +311,27 @@ production-zone-1:
   templates:
   - template: my-deployment.yaml.j2
 ```
+### Template loader path 
+k8s-handle uses jinja2 template engine and initializes it with base folder specified in the TEMPLATES_DIR env variable.
+Jinja environment considers template paths as specified relatively to its base init directory. 
+
+Therefore, users **must** specify paths in `{% include %}` (and other) blocks relatively to the base (TEMPLATES_DIR) folder, not relative to the importer template location.
+
+Example
+
+We have the following templates dir content layout:
+```
+templates /
+     subdirectory /
+         template_A.yaml
+         template_B.yaml
+```
+In that scheme, if template_A contains jinja2 import of the template_B, that import statement must be
+```
+{% include "subdirectory/template_B.yaml" %}
+```
+despite that included template lies as the same level as the template where include is used.
+
 ### Tags
 If you have a large deployment with many separate parts (for ex. main application and migration job), you can want to deploy them independently. In this case you have two options:
 * Use multiple isolated sections (like `production_app`, `production_migration`, etc.)

@@ -314,9 +314,8 @@ production-zone-1:
 ### Template loader path 
 k8s-handle uses jinja2 template engine and initializes it with base folder specified in the TEMPLATES_DIR env variable.
 Jinja environment considers template paths as specified relatively to its base init directory. 
- 
-Therefore, users **must** specify paths in {% include %} (and other) blocks relatively to the base (TEMPLATES_DIR) folder, not
-relative to the importer template location. 
+
+Therefore, users **must** specify paths in `{% include %}` (and other) blocks relatively to the base (TEMPLATES_DIR) folder, not relative to the importer template location.
 
 Example
 

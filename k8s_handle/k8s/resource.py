@@ -458,6 +458,8 @@ class Adapter:
             return client.SchedulingV1alpha1Api()
         if api_version == 'scheduling.k8s.io/v1beta1':
             return client.SchedulingV1beta1Api()
+        if api_version == 'networking.k8s.io/v1':
+            return client.NetworkingV1Api()
         if api_version == 'test/test':
             return K8sClientMock(self.name)
 
@@ -468,7 +470,7 @@ class Adapter:
                         'Secret', 'Service', 'ServiceAccount', 'StatefulSet', 'StorageClass',
                         'PersistentVolume', 'PersistentVolumeClaim', 'HorizontalPodAutoscaler',
                         'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding',
-                        'PriorityClass', 'PodSecurityPolicy', 'LimitRange']:
+                        'PriorityClass', 'PodSecurityPolicy', 'LimitRange', 'NetworkPolicy']:
             raise RuntimeError('Unknown kind "{}" in generated file'.format(kind))
 
         return _split_str_by_capital_letters(kind)

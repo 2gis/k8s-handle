@@ -1,5 +1,5 @@
 requests==2.20.1
 jinja2==2.10
-PyYAML==3.13
+PyYAML==5.1
 kubernetes==7.0.0
 semver==2.8.1

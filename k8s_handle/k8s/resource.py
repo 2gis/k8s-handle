@@ -418,50 +418,43 @@ class Provisioner:
 
 
 class Adapter:
+    client_version_mapping = {
+        'apps/v1beta1': client.AppsV1beta1Api,
+        'v1': client.CoreV1Api,
+        'extensions/v1beta1': client.ExtensionsV1beta1Api,
+        'batch/v1': client.BatchV1Api,
+        'batch/v2alpha1': client.BatchV2alpha1Api,
+        'batch/v1beta1': client.BatchV1beta1Api,
+        'policy/v1beta1': client.PolicyV1beta1Api,
+        'storage.k8s.io/v1': client.StorageV1Api,
+        'apps/v1': client.AppsV1Api,
+        'autoscaling/v1': client.AutoscalingV1Api,
+        'rbac.authorization.k8s.io/v1': client.RbacAuthorizationV1Api,
+        'scheduling.k8s.io/v1alpha1': client.SchedulingV1alpha1Api,
+        'scheduling.k8s.io/v1beta1': client.SchedulingV1beta1Api,
+        'networking.k8s.io/v1': client.NetworkingV1Api,
+        'apiextensions.k8s.io/v1beta1': client.ApiextensionsV1beta1Api,
+    }
+
     def __init__(self, spec, api=None):
         self.kind = self._get_app_kind(spec['kind'])
         self.name = spec['metadata']['name']
         self.body = spec
         self.replicas = None if 'spec' not in spec or 'replicas' not in spec['spec'] else spec['spec']['replicas']
         self.namespace = spec['metadata']['namespace'] if 'namespace' in spec['metadata'] else settings.K8S_NAMESPACE
-
-        if api is not None:
-            self.api = api
-        else:
-            self.api = self._detect_api_object(spec['apiVersion'])
+        self.api = api or self._detect_api_object(spec['apiVersion'])
 
     def _detect_api_object(self, api_version):
         # Due to https://github.com/kubernetes-client/python/issues/387
-        if api_version == 'apps/v1beta1':
-            return client.AppsV1beta1Api()
-        if api_version == 'v1':
-            return client.CoreV1Api()
-        if api_version == 'extensions/v1beta1':
-            return client.ExtensionsV1beta1Api()
-        if api_version == 'batch/v1':
-            return client.BatchV1Api()
-        if api_version == 'batch/v2alpha1':
-            return client.BatchV2alpha1Api()
-        if api_version == 'batch/v1beta1':
-            return client.BatchV1beta1Api()
-        if api_version == 'policy/v1beta1':
-            return client.PolicyV1beta1Api()
-        if api_version == 'storage.k8s.io/v1':
-            return client.StorageV1Api()
-        if api_version == 'apps/v1':
-            return client.AppsV1Api()
-        if api_version == 'autoscaling/v1':
-            return client.AutoscalingV1Api()
-        if api_version == 'rbac.authorization.k8s.io/v1':
-            return client.RbacAuthorizationV1Api()
-        if api_version == 'scheduling.k8s.io/v1alpha1':
-            return client.SchedulingV1alpha1Api()
-        if api_version == 'scheduling.k8s.io/v1beta1':
-            return client.SchedulingV1beta1Api()
-        if api_version == 'networking.k8s.io/v1':
-            return client.NetworkingV1Api()
         if api_version == 'test/test':
             return K8sClientMock(self.name)
+
+        api = self.client_version_mapping.get(api_version)
+
+        if not api:
+            return None
+
+        return api()
 
     @staticmethod
     def _get_app_kind(kind):
@@ -469,7 +462,7 @@ class Adapter:
                         'Ingress', 'Job', 'Namespace', 'PodDisruptionBudget', 'ResourceQuota',
                         'Secret', 'Service', 'ServiceAccount', 'StatefulSet', 'StorageClass',
                         'PersistentVolume', 'PersistentVolumeClaim', 'HorizontalPodAutoscaler',
-                        'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding',
+                        'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding', 'CustomResourceDefinition',
                         'PriorityClass', 'PodSecurityPolicy', 'LimitRange', 'NetworkPolicy']:
             raise RuntimeError('Unknown kind "{}" in generated file'.format(kind))
 
@@ -539,7 +532,8 @@ class Adapter:
         except ValueError as e:
             log.error(e)
             # WORKAROUND https://github.com/kubernetes-client/python/issues/466
-            if self.kind != 'pod_disruption_budget':
+            # also https://github.com/kubernetes-client/gen/issues/52
+            if self.kind not in ['pod_disruption_budget', 'custom_resource_definition']:
                 raise e
 
     def replace(self, ports=None):

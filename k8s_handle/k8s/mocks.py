@@ -1,5 +1,7 @@
-from kubernetes.client.rest import ApiException
 from collections import namedtuple
+
+from kubernetes.client import V1beta1CustomResourceDefinitionList
+from kubernetes.client.rest import ApiException
 
 
 class K8sClientMock:
@@ -289,3 +291,15 @@ class ServicePort:
             self.target_port = port
         else:
             self.target_port = port
+
+
+class CustomObjectsAPIMock:
+    pass
+
+
+class DefinitionsAPIMock:
+    def __init__(self, items=None):
+        self._items = items or []
+
+    def list_custom_resource_definition(self):
+        return V1beta1CustomResourceDefinitionList(items=self._items)

@@ -1,6 +1,7 @@
 import unittest
 
-from k8s_handle.k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
+from k8s_handle.exceptions import DeprecationError
+from k8s_handle.k8s.deprecation_checker import ApiDeprecationChecker
 
 
 class TestApiDeprecationChecker(unittest.TestCase):

@@ -591,8 +591,3 @@ $ k8s-handle delete -r service.yaml --use-kubeconfig
 ### Custom resource definitions and custom resources
 Since version 0.5.5 k8s-handle supports Custom resource definition (CRD) and custom resource (CR) kinds.
 If your deployment involves use of such kinds, make sure that CRD was deployed before CR and check correctness of the CRD's scope.
-
-Currently, in the case of a custom resource deployment, k8s-handle takes into account only the namespace 
-specified in the `metadata.namespace` field of the spec, in order to distinguish whether CR should be deployed/removed via namespaced API or not, without additional markers or flags. 
-
-Default k8s_namespace (taken from CLI, env or context) **is not applied** to such resources. Therefore, in order to create namespaced CR, one should explicitly set `metadata.namespace` field of that resource's spec.

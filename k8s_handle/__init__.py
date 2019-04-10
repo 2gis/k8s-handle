@@ -11,9 +11,10 @@ from kubernetes.config import list_kube_config_contexts, load_kube_config
 from k8s_handle import config
 from k8s_handle import settings
 from k8s_handle import templating
+from k8s_handle.exceptions import DeprecationError, ProvisioningError
 from k8s_handle.filesystem import InvalidYamlError
-from k8s_handle.k8s.deprecation_checker import ApiDeprecationChecker, DeprecationError
-from k8s_handle.k8s.resource import Provisioner, ProvisioningError
+from k8s_handle.k8s.deprecation_checker import ApiDeprecationChecker
+from k8s_handle.k8s.provisioner import Provisioner
 
 COMMAND_DEPLOY = 'deploy'
 COMMAND_DESTROY = 'destroy'

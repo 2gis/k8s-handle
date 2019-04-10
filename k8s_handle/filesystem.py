@@ -5,13 +5,11 @@ import tempfile
 
 import yaml
 
+from k8s_handle.exceptions import InvalidYamlError
+
 # furiousassault RE: it's not a good practice to log from utility function
 # maybe we should pass os.remove failure silently, it doesn't seem so important
 log = logging.getLogger(__name__)
-
-
-class InvalidYamlError(Exception):
-    pass
 
 
 def load_yaml(path):

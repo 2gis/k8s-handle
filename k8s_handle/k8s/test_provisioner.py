@@ -1,14 +1,14 @@
 import unittest
 
 from k8s_handle import settings
+from k8s_handle.exceptions import ProvisioningError
 from k8s_handle.templating import get_template_contexts
+from .adapters import AdapterBuiltinKind
 from .mocks import K8sClientMock
 from .mocks import ServiceMetadata
 from .mocks import ServicePort
 from .mocks import ServiceSpec
-from .resource import Adapter
-from .resource import Provisioner
-from .resource import ProvisioningError
+from .provisioner import Provisioner
 
 
 class TestProvisioner(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestProvisioner(unittest.TestCase):
         settings.GET_ENVIRON_STRICT = False
 
     def test_deployment_wait_complete_fail(self):
-        client = Adapter(
+        client = AdapterBuiltinKind(
             api=K8sClientMock('test1'),
             spec={'kind': 'Deployment', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
@@ -24,69 +24,69 @@ class TestProvisioner(unittest.TestCase):
         self.assertTrue('Deployment not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_deployment_wait_complete(self):
-        client = Adapter(
+        client = AdapterBuiltinKind(
             api=K8sClientMock('test2'),
             spec={'kind': 'Deployment', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         Provisioner('deploy', False, None)._wait_deployment_complete(client, tries=1, timeout=0)
 
     def test_statefulset_wait_complete_fail(self):
-        client = Adapter(api=K8sClientMock('test1'),
-                         spec={'kind': 'StatefulSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test1'),
+                                    spec={'kind': 'StatefulSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
             Provisioner('deploy', False, None)._wait_statefulset_complete(client, tries=1, timeout=0)
         self.assertTrue('StatefulSet not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_statefulset_wait_complete(self):
-        client = Adapter(api=K8sClientMock('test2'),
-                         spec={'kind': 'StatefulSet', 'metadata': {'name': ''}, 'spec': {'replicas': 3}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test2'),
+                                    spec={'kind': 'StatefulSet', 'metadata': {'name': ''}, 'spec': {'replicas': 3}})
         Provisioner('deploy', False, None)._wait_statefulset_complete(client, tries=1, timeout=0)
 
     def test_daemonset_wait_complete_fail(self):
-        client = Adapter(api=K8sClientMock('test1'),
-                         spec={'kind': 'DaemonSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test1'),
+                                    spec={'kind': 'DaemonSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
             Provisioner('deploy', False, None)._wait_daemonset_complete(client, tries=1, timeout=0)
         self.assertTrue('DaemonSet not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_daemonset_wait_complete(self):
-        client = Adapter(api=K8sClientMock('test2'),
-                         spec={'kind': 'DaemonSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test2'),
+                                    spec={'kind': 'DaemonSet', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         Provisioner('deploy', False, None)._wait_daemonset_complete(client, tries=1, timeout=0)
 
     def test_job_wait_complete_fail(self):
-        client = Adapter(api=K8sClientMock('test1'),
-                         spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test1'),
+                                    spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
             Provisioner('deploy', False, None)._wait_job_complete(client, tries=1, timeout=0)
 
         self.assertTrue('Job running failed' in str(context.exception))
 
     def test_job_wait_complete_conditions_fail(self):
-        client = Adapter(api=K8sClientMock('test2'),
-                         spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test2'),
+                                    spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
             Provisioner('deploy', False, None)._wait_job_complete(client, tries=1, timeout=0)
         self.assertTrue('Job not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_job_wait_complete(self):
-        client = Adapter(api=K8sClientMock('test3'),
-                         spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test3'),
+                                    spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         Provisioner('deploy', False, None)._wait_job_complete(client, tries=1, timeout=0)
 
     def test_ns_from_template(self):
-        client = Adapter(api=K8sClientMock('test'),
-                         spec={'kind': 'Job', 'metadata': {'name': '', 'namespace': 'test'},
-                               'spec': {'replicas': 1}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test'),
+                                    spec={'kind': 'Job', 'metadata': {'name': '', 'namespace': 'test'},
+                                          'spec': {'replicas': 1}})
         self.assertEqual(client.namespace, 'test')
 
     def test_ns_from_config(self):
         settings.K8S_NAMESPACE = 'namespace'
-        client = Adapter(api=K8sClientMock('test'),
-                         spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
+        client = AdapterBuiltinKind(api=K8sClientMock('test'),
+                                    spec={'kind': 'Job', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
         self.assertEqual(client.namespace, 'namespace')
 
     def test_deployment_destruction_wait_fail(self):
-        client = Adapter(
+        client = AdapterBuiltinKind(
             api=K8sClientMock('test1'),
             spec={'kind': 'Deployment', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
@@ -94,13 +94,13 @@ class TestProvisioner(unittest.TestCase):
         self.assertTrue('Deployment destruction not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_deployment_destruction_wait_success(self):
-        client = Adapter(
+        client = AdapterBuiltinKind(
             api=K8sClientMock('404'),
             spec={'kind': 'Deployment', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         Provisioner('destroy', False, None)._wait_destruction_complete(client, 'Deployment', tries=1, timeout=0)
 
     def test_job_destruction_wait_fail(self):
-        client = Adapter(
+        client = AdapterBuiltinKind(
             api=K8sClientMock('test1'),
             spec={'kind': 'Job', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         with self.assertRaises(RuntimeError) as context:
@@ -108,7 +108,7 @@ class TestProvisioner(unittest.TestCase):
         self.assertTrue('Job destruction not completed for 1 tries' in str(context.exception), context.exception)
 
     def test_job_destruction_wait_success(self):
-        client = Adapter(
+        client = AdapterBuiltinKind(
             api=K8sClientMock('404'),
             spec={'kind': 'Job', 'metadata': {'name': 'test1'}, 'spec': {'replicas': 1}})
         Provisioner('destroy', False, None)._wait_destruction_complete(client, 'Job', tries=1, timeout=0)

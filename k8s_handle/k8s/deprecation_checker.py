@@ -3,12 +3,9 @@ import logging
 import semver
 
 from k8s_handle.templating import get_template_contexts
+from k8s_handle.exceptions import DeprecationError
 
 log = logging.getLogger(__name__)
-
-
-class DeprecationError(Exception):
-    pass
 
 
 class ApiDeprecationChecker:

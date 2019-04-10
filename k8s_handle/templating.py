@@ -10,11 +10,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from jinja2.exceptions import TemplateNotFound, TemplateSyntaxError, UndefinedError
 
 from k8s_handle import settings
-
-
-class TemplateRenderingError(Exception):
-    pass
-
+from k8s_handle.exceptions import TemplateRenderingError
 
 log = logging.getLogger(__name__)
 

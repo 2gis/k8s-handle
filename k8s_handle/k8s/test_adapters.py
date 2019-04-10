@@ -1,13 +1,11 @@
 import unittest
 
-from kubernetes.client import V1beta1CustomResourceDefinition, V1ObjectMeta, V1beta1CustomResourceDefinitionSpec
-from kubernetes.client import V1beta1CustomResourceDefinitionCondition, V1beta1CustomResourceDefinitionVersion
-from kubernetes.client import V1beta1CustomResourceDefinitionStatus, V1beta1CustomResourceDefinitionNames
+from kubernetes.client import V1APIResource
 
 from k8s_handle.exceptions import ProvisioningError
 from k8s_handle.transforms import split_str_by_capital_letters
-from .adapters import Adapter, AdapterBuiltinKind, AdapterCustomKind, DefinitionQualifier
-from .mocks import K8sClientMock, CustomObjectsAPIMock, DefinitionsAPIMock
+from .adapters import Adapter, AdapterBuiltinKind, AdapterCustomKind
+from .mocks import K8sClientMock, CustomObjectsAPIMock, ResourcesAPIMock
 
 
 class TestAdapterBuiltInKind(unittest.TestCase):
@@ -169,11 +167,11 @@ class TestAdapterBuiltInKind(unittest.TestCase):
 class TestAdapter(unittest.TestCase):
     def test_get_instance_custom(self):
         self.assertIsInstance(
-            Adapter.get_instance({'kind': "CustomKind"}, CustomObjectsAPIMock(), DefinitionsAPIMock()),
+            Adapter.get_instance({'kind': "CustomKind"}, CustomObjectsAPIMock(), ResourcesAPIMock()),
             AdapterCustomKind
         )
         self.assertIsInstance(
-            Adapter.get_instance({'kind': "CustomKind"}, CustomObjectsAPIMock(), DefinitionsAPIMock()),
+            Adapter.get_instance({'kind': "CustomKind"}, CustomObjectsAPIMock(), ResourcesAPIMock()),
             AdapterCustomKind
         )
 
@@ -207,76 +205,53 @@ class TestAdapter(unittest.TestCase):
 
 
 class TestAdapterCustomKind(unittest.TestCase):
-    def test_initialization_plural_missing(self):
+    @staticmethod
+    def _resources_api_mock():
+        return ResourcesAPIMock(
+            'version',
+            'group/version',
+            [V1APIResource(None, 'group', 'kind', 'kinds', True, [], 'kind', [])]
+        )
+
+    def test_initialization_positive(self):
         adapter = Adapter.get_instance(
             {
-                'kind': 'Custom',
-                'apiVersion': 'domain/version',
+                'kind': 'kind',
+                'apiVersion': 'group/version',
                 'metadata': {
                     "namespace": 'test_namespace'
                 }
-            }, CustomObjectsAPIMock(), DefinitionsAPIMock()
+            }, CustomObjectsAPIMock(), TestAdapterCustomKind._resources_api_mock()
         )
-        self.assertEqual(adapter.kind, 'Custom')
+        self.assertEqual(adapter.kind, 'kind')
         self.assertEqual(adapter.namespace, 'test_namespace')
-        self.assertEqual(adapter.group, 'domain')
+        self.assertEqual(adapter.group, 'group')
         self.assertEqual(adapter.version, 'version')
-        self.assertIsNone(adapter.plural)
+        self.assertEqual(adapter.plural, 'kinds')
         self.assertIsInstance(adapter.api, CustomObjectsAPIMock)
 
     def test_initialization_kind_missing(self):
-        adapter = Adapter.get_instance({}, CustomObjectsAPIMock(), DefinitionsAPIMock())
+        adapter = Adapter.get_instance({}, CustomObjectsAPIMock(), TestAdapterCustomKind._resources_api_mock())
         self.assertFalse(adapter.kind)
         self.assertFalse(adapter.plural)
 
     def test_initialization_api_version_invalid(self):
-        adapter = Adapter.get_instance({}, CustomObjectsAPIMock(), DefinitionsAPIMock())
+        adapter = Adapter.get_instance({}, CustomObjectsAPIMock(), TestAdapterCustomKind._resources_api_mock())
         self.assertFalse(adapter.group)
         self.assertFalse(adapter.version)
 
-        adapter = Adapter.get_instance({'apiVersion': 'noslash'}, CustomObjectsAPIMock(), DefinitionsAPIMock())
+        adapter = Adapter.get_instance(
+            {'apiVersion': 'noslash'},
+            CustomObjectsAPIMock(),
+            TestAdapterCustomKind._resources_api_mock()
+        )
         self.assertFalse(adapter.group)
         self.assertFalse(adapter.version)
 
         adapter = Adapter.get_instance(
             {'apiVersion': 'domain/version/something'},
             CustomObjectsAPIMock(),
-            DefinitionsAPIMock()
+            ResourcesAPIMock()
         )
         self.assertEqual(adapter.group, 'domain')
         self.assertEqual(adapter.version, 'version/something')
-
-
-class TestDefinitionQualifier(unittest.TestCase):
-    def test_positive(self):
-        qualifier = DefinitionQualifier(
-            DefinitionsAPIMock(
-                [
-                    V1beta1CustomResourceDefinition(
-                        'version',
-                        'kind',
-                        V1ObjectMeta(name='name', namespace='namespace'),
-                        V1beta1CustomResourceDefinitionSpec(
-                            versions=[V1beta1CustomResourceDefinitionVersion('version', True, True)],
-                            group='group',
-                            names=V1beta1CustomResourceDefinitionNames(plural='kinds', kind='kind'),
-                            scope='Namespaced',
-                        ),
-                        V1beta1CustomResourceDefinitionStatus(
-                            V1beta1CustomResourceDefinitionNames(
-                                kind='kind',
-                                plural='kinds',
-                                short_names=[],
-                                singular='kind'
-                            ),
-                            [V1beta1CustomResourceDefinitionCondition(None, None, None, 'True', 'Established')],
-                            stored_versions=[]
-
-                        )
-                    )
-                ]
-            )
-        )
-        qualifier.qualify('kind', 'group', 'version')
-        self.assertEqual(qualifier.plural, 'kinds')
-        self.assertEqual(qualifier.namespace, 'namespace')

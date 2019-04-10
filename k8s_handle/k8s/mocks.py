@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from kubernetes.client import V1beta1CustomResourceDefinitionList
+from kubernetes.client import V1APIResourceList
 from kubernetes.client.rest import ApiException
 
 
@@ -297,9 +297,15 @@ class CustomObjectsAPIMock:
     pass
 
 
-class DefinitionsAPIMock:
-    def __init__(self, items=None):
-        self._items = items or []
+class ResourcesAPIMock:
+    def __init__(self, api_version=None, group_version=None, resources=None):
+        self._resources = resources
+        self._api_version = api_version
+        self._group_version = group_version
+        self._kind = 'APIResourceList'
 
-    def list_custom_resource_definition(self):
-        return V1beta1CustomResourceDefinitionList(items=self._items)
+    def list_api_resource_arbitrary(self, group, version):
+        if not self._resources or self._group_version != '{}/{}'.format(group, version):
+            return None
+
+        return V1APIResourceList(self._api_version, self._group_version, self._kind, self._resources)

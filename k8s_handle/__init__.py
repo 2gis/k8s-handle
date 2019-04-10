@@ -229,8 +229,7 @@ def main():
     except RuntimeError as e:
         log.error('RuntimeError: {}'.format(e))
         sys.exit(1)
-    except ProvisioningError as e:
-        log.error('Provisioning error: {}'.format(e))
+    except ProvisioningError:
         sys.exit(1)
 
     print(r'''

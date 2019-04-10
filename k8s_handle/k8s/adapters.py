@@ -6,6 +6,7 @@ from kubernetes.client.rest import ApiException
 from k8s_handle import settings
 from k8s_handle.exceptions import ProvisioningError
 from k8s_handle.transforms import add_indent, split_str_by_capital_letters
+from .api_extensions import ResourcesAPI
 from .mocks import K8sClientMock
 
 log = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class Adapter:
         self.name = spec.get('metadata', {}).get('name')
 
     @staticmethod
-    def get_instance(spec, custom_objects_api=None, definitions_api=None):
+    def get_instance(spec, api_custom_objects=None, api_resources=None):
         # due to https://github.com/kubernetes-client/python/issues/387
         if spec.get('kind') in Adapter.kinds_builtin:
             if spec.get('apiVersion') == 'test/test':
@@ -57,10 +58,9 @@ class Adapter:
 
             return AdapterBuiltinKind(spec, api())
 
-        custom_objects_api = custom_objects_api or client.CustomObjectsApi()
-        definitions_api = definitions_api or client.ApiextensionsV1beta1Api()
-
-        return AdapterCustomKind(spec, custom_objects_api, DefinitionQualifier(definitions_api))
+        api_custom_objects = api_custom_objects or client.CustomObjectsApi()
+        api_resources = api_resources or ResourcesAPI()
+        return AdapterCustomKind(spec, api_custom_objects, api_resources)
 
 
 class AdapterBuiltinKind(Adapter):
@@ -182,10 +182,12 @@ class AdapterBuiltinKind(Adapter):
 
 
 class AdapterCustomKind(Adapter):
-    def __init__(self, spec, api, qualifier):
+    def __init__(self, spec, api_custom_objects, api_resources):
         super().__init__(spec)
-        self.namespace = None
-        self.api = api
+        self.api = api_custom_objects
+        self.api_resources = api_resources
+        self.namespace = ""
+        self.plural = None
 
         try:
             api_version_splitted = spec.get('apiVersion').split('/', 1)
@@ -195,9 +197,21 @@ class AdapterCustomKind(Adapter):
             self.group = None
             self.version = None
 
-        qualifier.qualify(self.kind, self.group, self.version)
-        self.plural = qualifier.plural
-        self.namespace = qualifier.namespace or spec.get('metadata', {}).get('namespace', "")
+        resources_list = self.api_resources.list_api_resource_arbitrary(self.group, self.version)
+
+        if not resources_list:
+            return
+
+        for resource in resources_list.resources:
+            if resource.kind != self.kind:
+                continue
+
+            self.plural = resource.name
+
+            if resource.namespaced:
+                self.namespace = spec.get('metadata', {}).get('namespace', "")
+
+            break
 
     def get(self):
         self._validate()
@@ -273,66 +287,10 @@ class AdapterCustomKind(Adapter):
 
     def _validate(self):
         if not self.plural:
-            raise ProvisioningError("No valid plural name of resource definition discovered")
+            raise RuntimeError("No valid plural name of resource definition discovered")
 
         if not self.group:
-            raise ProvisioningError("No valid resource definition group discovered")
+            raise RuntimeError("No valid resource definition group discovered")
 
         if not self.version:
-            raise ProvisioningError("No valid version of resource definition supplied")
-
-
-class DefinitionQualifier:
-    def __init__(self, api):
-        self._api = api
-        self._plural = None
-        self._namespace = None
-
-    @property
-    def plural(self):
-        return self._plural
-
-    @property
-    def namespace(self):
-        return self._namespace
-
-    def qualify(self, kind, group, version):
-        for definition in self._api.list_custom_resource_definition().items:
-            if definition.status.accepted_names.kind != kind:
-                continue
-
-            if definition.spec.group != group:
-                continue
-
-            match = False
-
-            for version_ in definition.spec.versions:
-                if version_.name != version:
-                    continue
-
-                match = True
-                break
-
-            if not match:
-                continue
-
-            match = False
-
-            for condition in definition.status.conditions:
-                if condition.type != 'Established':
-                    continue
-
-                if condition.status != 'True':
-                    continue
-
-                match = True
-
-            if not match:
-                continue
-
-            self._plural = definition.spec.names.plural
-
-            if definition.spec.scope == 'Namespaced':
-                self._namespace = definition.metadata.namespace
-
-            break
+            raise RuntimeError("No valid version of resource definition supplied")

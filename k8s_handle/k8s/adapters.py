@@ -43,6 +43,7 @@ class Adapter:
         self.body = spec
         self.kind = spec.get('kind', "")
         self.name = spec.get('metadata', {}).get('name')
+        self.namespace = spec.get('metadata', {}).get('namespace', "") or settings.K8S_NAMESPACE
 
     @staticmethod
     def get_instance(spec, api_custom_objects=None, api_resources=None):
@@ -68,7 +69,6 @@ class AdapterBuiltinKind(Adapter):
         super().__init__(spec)
         self.kind = split_str_by_capital_letters(spec['kind'])
         self.replicas = spec.get('spec', {}).get('replicas')
-        self.namespace = spec.get('metadata', {}).get('namespace', "") or settings.K8S_NAMESPACE
         self.api = api
 
     def get(self):
@@ -186,7 +186,6 @@ class AdapterCustomKind(Adapter):
         super().__init__(spec)
         self.api = api_custom_objects
         self.api_resources = api_resources
-        self.namespace = ""
         self.plural = None
 
         try:
@@ -208,8 +207,8 @@ class AdapterCustomKind(Adapter):
 
             self.plural = resource.name
 
-            if resource.namespaced:
-                self.namespace = spec.get('metadata', {}).get('namespace', "")
+            if not resource.namespaced:
+                self.namespace = ""
 
             break
 

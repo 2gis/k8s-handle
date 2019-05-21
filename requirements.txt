@@ -1,4 +1,4 @@
-requests==2.20.1
+requests==2.22.0
 jinja2==2.10.1
 PyYAML==5.1
 kubernetes==7.0.0

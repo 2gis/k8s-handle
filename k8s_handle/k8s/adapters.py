@@ -1,4 +1,5 @@
 import logging
+from time import sleep
 
 from kubernetes import client
 from kubernetes.client.rest import ApiException
@@ -10,6 +11,9 @@ from .api_extensions import ResourcesAPI
 from .mocks import K8sClientMock
 
 log = logging.getLogger(__name__)
+
+RE_CREATE_TRIES = 10
+RE_CREATE_TIMEOUT = 1
 
 
 class Adapter:
@@ -134,15 +138,16 @@ class AdapterBuiltinKind(Adapter):
             raise ProvisioningError(e)
         except ValueError as e:
             log.error(e)
-            # WORKAROUND https://github.com/kubernetes-client/python/issues/466
-            # also https://github.com/kubernetes-client/gen/issues/52
-            if self.kind not in ['pod_disruption_budget', 'custom_resource_definition']:
+            # WORKAROUND https://github.com/kubernetes-client/gen/issues/52
+            if self.kind not in ['custom_resource_definition']:
                 raise e
 
     def replace(self, parameters):
         try:
-            if self.kind in ['custom_resource_definition']:
+            if self.kind in ['custom_resource_definition', 'pod_disruption_budget']:
                 self.body['metadata']['resourceVersion'] = parameters['resourceVersion']
+
+            if self.kind in ['custom_resource_definition']:
                 return self.api.replace_custom_resource_definition(
                     self.name, self.body,
                 )
@@ -162,6 +167,8 @@ class AdapterBuiltinKind(Adapter):
             return getattr(self.api, 'replace_{}'.format(self.kind))(
                 name=self.name, body=self.body)
         except ApiException as e:
+            if self.kind in ['pod_disruption_budget'] and e.status == 422:
+                return self.re_create()
             log.error('Exception when calling "replace_namespaced_{}": {}'.format(self.kind, add_indent(e.body)))
             raise ProvisioningError(e)
 
@@ -179,6 +186,17 @@ class AdapterBuiltinKind(Adapter):
                 return None
             log.error('Exception when calling "delete_namespaced_{}": {}'.format(self.kind, add_indent(e.body)))
             raise ProvisioningError(e)
+
+    def re_create(self):
+        log.info('Re-creating {}'.format(self.kind))
+        self.body['metadata'].pop('resourceVersion', None)
+        self.delete()
+
+        for i in range(0, RE_CREATE_TRIES):
+            if self.get() is not None:
+                sleep(RE_CREATE_TIMEOUT)
+
+        return self.create()
 
 
 class AdapterCustomKind(Adapter):

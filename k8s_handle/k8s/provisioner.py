@@ -213,7 +213,7 @@ class Provisioner:
                     log.warning('PersistentVolume has "{}" status, skip replacing'.format(resource.status.phase))
                     return
 
-            if template_body['kind'] == 'CustomResourceDefinition':
+            if template_body['kind'] in ['CustomResourceDefinition', 'PodDisruptionBudget']:
                 parameters['resourceVersion'] = resource.metadata.resource_version
 
             kube_client.replace(parameters)

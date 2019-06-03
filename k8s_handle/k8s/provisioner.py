@@ -20,9 +20,9 @@ class Provisioner:
         self.show_logs = show_logs
 
     @staticmethod
-    def _replicas_count_are_greater_or_equal(replicas):
+    def _replicas_count_are_equal(replicas):
         replicas = [0 if r is None else r for r in replicas]  # replace all None to 0
-        return all(r >= replicas[0] for r in replicas)
+        return all(r == replicas[0] for r in replicas)
 
     @staticmethod
     def _ports_are_equal(old_port, new_port):
@@ -326,14 +326,15 @@ class Provisioner:
     def _wait_deployment_complete(self, kube_client, tries, timeout):
         for i in range(0, tries):
             sleep(timeout)
-            status = kube_client.get().status
+            deployment = kube_client.get()
+            status = deployment.status
 
-            replicas = [kube_client.replicas, status.replicas, status.available_replicas,
+            replicas = [deployment.spec.replicas, status.replicas, status.available_replicas,
                         status.ready_replicas, status.updated_replicas]
 
             log.info('desiredReplicas = {}, updatedReplicas = {}, availableReplicas = {}'.
                      format(replicas[0], replicas[4], replicas[2]))
-            if self._replicas_count_are_greater_or_equal(replicas) and status.unavailable_replicas is None:
+            if self._replicas_count_are_equal(replicas) and status.unavailable_replicas is None:
                 log.info('Deployment completed on {} attempt'.format(i + 1))
                 return
             else:
@@ -344,17 +345,18 @@ class Provisioner:
     def _wait_statefulset_complete(self, kube_client, tries, timeout):
         for i in range(0, tries):
             sleep(timeout)
-            status = kube_client.get().status
+            statefulset = kube_client.get()
+            status = statefulset.status
 
             current_revision = status.current_revision
             update_revision = status.update_revision
-            replicas = [kube_client.replicas, status.current_replicas, status.ready_replicas]
+            replicas = [statefulset.spec.replicas, status.current_replicas, status.ready_replicas]
 
             log.info('Current revision {}, should be {}'.format(current_revision, update_revision))
             if current_revision == update_revision:
                 log.info('desiredReplicas = {}, updatedReplicas = {}, availableReplicas = {}'.
                          format(replicas[0], replicas[1], replicas[2]))
-                if self._replicas_count_are_greater_or_equal(replicas):
+                if self._replicas_count_are_equal(replicas):
                     log.info('StatefulSet completed on {} attempt'.format(i))
                     return
             else:
@@ -371,7 +373,7 @@ class Provisioner:
                         status.number_ready, status.updated_number_scheduled]
             log.info('desiredNodes = {}, availableNodes = {}, readyNodes = {}, updatedNodes = {}'.
                      format(replicas[0], replicas[1], replicas[2], replicas[3]))
-            if self._replicas_count_are_greater_or_equal(replicas) and status.number_unavailable is None:
+            if self._replicas_count_are_equal(replicas) and status.number_unavailable is None:
                 log.info('DaemonSet completed on {} attempt'.format(i))
                 return
             else:

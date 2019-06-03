@@ -16,24 +16,26 @@ class K8sClientMock:
         if self.name == '404' or name == '404':
             raise ApiException(reason='Not Found')
 
-        my_response = namedtuple('my_response', 'metadata status')
+        my_response = namedtuple('my_response', 'metadata status spec')
         my_status = namedtuple('my_status',
                                'replicas available_replicas ready_replicas updated_replicas unavailable_replicas')
-
+        my_spec = namedtuple('my_spec', 'replicas')
         if self.name == 'test1':
-            return my_response(metadata={}, status=my_status(replicas=3,
-                                                             available_replicas=2,
-                                                             ready_replicas=1,
-                                                             updated_replicas=None,
-                                                             unavailable_replicas=1))
+            return my_response(metadata={}, spec=my_spec(replicas=3),
+                               status=my_status(replicas=3,
+                                                available_replicas=2,
+                                                ready_replicas=1,
+                                                updated_replicas=None,
+                                                unavailable_replicas=1))
         if self.name == 'test2' or name == 'test2':
-            return my_response(metadata={}, status=my_status(replicas=1,
-                                                             available_replicas=1,
-                                                             ready_replicas=1,
-                                                             updated_replicas=1,
-                                                             unavailable_replicas=None))
+            return my_response(metadata={}, spec=my_spec(replicas=1),
+                               status=my_status(replicas=1,
+                                                available_replicas=1,
+                                                ready_replicas=1,
+                                                updated_replicas=1,
+                                                unavailable_replicas=None))
 
-        return my_response(metadata={'key1': 'value1'}, status={'key1': 'value1'})
+        return my_response(metadata={'key1': 'value1'}, status={'key1': 'value1'}, spec={'key1': 'value1'})
 
     def create_namespaced_deployment(self, body, namespace):
         if self.name == 'fail':
@@ -113,25 +115,28 @@ class K8sClientMock:
         if self.name == '404':
             raise ApiException(reason='Not Found')
 
-        my_response = namedtuple('my_response', 'metadata status')
+        my_response = namedtuple('my_response', 'metadata status spec')
         my_status = namedtuple('my_status',
                                'current_replicas current_revision ready_replicas replicas update_revision')
+        my_spec = namedtuple('my_spec', 'replicas')
 
         if self.name == 'test1':
-            return my_response(metadata={}, status=my_status(current_replicas=2,
-                                                             current_revision='revision-123',
-                                                             ready_replicas=1,
-                                                             replicas=3,
-                                                             update_revision='revision-321'))
+            return my_response(metadata={}, spec=my_spec(replicas=3),
+                               status=my_status(current_replicas=2,
+                                                current_revision='revision-123',
+                                                ready_replicas=1,
+                                                replicas=3,
+                                                update_revision='revision-321'))
 
         if self.name == 'test2':
-            return my_response(metadata={}, status=my_status(current_replicas=3,
-                                                             current_revision='revision-123',
-                                                             ready_replicas=3,
-                                                             replicas=3,
-                                                             update_revision='revision-123'))
+            return my_response(metadata={},  spec=my_spec(replicas=3),
+                               status=my_status(current_replicas=3,
+                                                current_revision='revision-123',
+                                                ready_replicas=3,
+                                                replicas=3,
+                                                update_revision='revision-123'))
 
-        return my_response(metadata={'key1': 'value1'}, status={'key1': 'value1'})
+        return my_response(metadata={'key1': 'value1'}, status={'key1': 'value1'}, spec={'key1': 'value1'})
 
     # DaemonSet
     def read_namespaced_daemon_set(self, name, namespace):

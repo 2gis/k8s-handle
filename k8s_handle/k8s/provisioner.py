@@ -229,7 +229,11 @@ class Provisioner:
                                                 tries=settings.CHECK_STATUS_TRIES,
                                                 timeout=settings.CHECK_STATUS_TIMEOUT)
 
-            if template_body['kind'] == 'DaemonSet':
+            # INFO: vadim.reyder Since Kubernetes version 1.6 all DaemonSets by default have
+            # `updateStrategy.type`=`RollingUpdate`, so we wait for deploy only if `updateStrategy.type` != 'OnDelete'.
+            # WARNING: We consciously skip case with kubernetes version < 1.6, due to it's very old.
+            if template_body['kind'] == 'DaemonSet' and \
+                    template_body.get('spec').get('updateStrategy', {}).get('type') != 'OnDelete':
                 self._wait_daemonset_complete(kube_client,
                                               tries=settings.CHECK_STATUS_TRIES,
                                               timeout=settings.CHECK_STATUS_TIMEOUT)

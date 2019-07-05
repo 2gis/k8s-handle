@@ -14,14 +14,34 @@ class ApiDeprecationChecker:
         self.deprecated_versions = {
             "extensions/v1beta1": {
                 "since": "1.8.0",
-                "until": "",
+                "until": "1.16.0",
                 "resources": [
                     "Deployment",
                     "DaemonSet",
                     "ReplicaSet",
                     "StatefulSet",
+                    "PodSecurityPolicy",
+                    "NetworkPolicy",
                 ],
-            }
+            },
+            "apps/v1beta1": {
+                "since": "1.9.0",
+                "until": "1.16.0",
+                "resources": [
+                    "Deployment",
+                    "DaemonSet",
+                    "ReplicaSet",
+                ],
+            },
+            "apps/v1beta2": {
+                "since": "1.9.0",
+                "until": "1.16.0",
+                "resources": [
+                    "Deployment",
+                    "DaemonSet",
+                    "ReplicaSet",
+                ],
+            },
         }
 
     def _is_server_version_greater(self, checked_version):

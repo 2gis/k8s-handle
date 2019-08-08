@@ -358,6 +358,22 @@ Command line keys `--tags` and `--skip-tags` can be specified multiple times, fo
 ```
 k8s-handle deploy --section production --tags=tag1 --tags=tag2 --tags=tag3
 ```
+
+### Groups
+You can make groups for templates. For example:
+```yaml
+production:
+  templates:
+  - group:
+    - template: my-configmap.yaml.j2
+    - template: my-deployment.yaml.j2
+    - template: my-service.yaml.j2
+    tags: service-one
+  - group:
+    - template: my-job.yaml.j2
+```
+It is useful for creating different sets of templates for other environments, or tag a bunch of templates at once
+
 ## Variables
 ### Required parameters
 k8s-handle needs several parameters to be set in order to connect to k8s, such as:

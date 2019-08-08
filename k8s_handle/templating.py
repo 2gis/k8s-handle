@@ -88,6 +88,21 @@ class Renderer:
         self._tags_skip = tags_skip
         self._env = get_env(self._templates_dir)
 
+    def _iterate_entries(self, entries, tags=None):
+        if tags is None:
+            tags = set()
+
+        for entry in entries:
+            entry["tags"] = self._get_template_tags(entry).union(tags)
+
+            if "group" not in entry.keys():
+                if not self._evaluate_tags(entry.get("tags"), self._tags, self._tags_skip):
+                    continue
+                yield entry
+
+            for nested_entry in self._iterate_entries(entry.get("group", []), entry.get("tags")):
+                yield nested_entry
+
     def generate_by_context(self, context):
         if context is None:
             raise RuntimeError('Can\'t generate templates from None context')
@@ -98,13 +113,8 @@ class Renderer:
             if len(templates) == 0:
                 return
 
-        templates = filter(
-            lambda i: self._evaluate_tags(self._get_template_tags(i), self._tags, self._tags_skip),
-            templates
-        )
-
         output = []
-        for template in templates:
+        for template in self._iterate_entries(templates):
             try:
                 path = self._generate_file(template, settings.TEMP_DIR, context)
                 log.info('File "{}" successfully generated'.format(path))
@@ -147,7 +157,7 @@ class Renderer:
     @staticmethod
     def _get_template_tags(template):
         if 'tags' not in template:
-            return {'untagged'}
+            return set()
 
         tags = template['tags']
 
@@ -161,4 +171,7 @@ class Renderer:
 
     @staticmethod
     def _evaluate_tags(tags, only_tags, skip_tags):
+        if only_tags is None and skip_tags is None:
+            return True
+
         return tags.isdisjoint(skip_tags or []) and not tags.isdisjoint(only_tags or tags)

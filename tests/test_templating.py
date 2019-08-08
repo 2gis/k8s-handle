@@ -57,7 +57,7 @@ class TestTemplating(unittest.TestCase):
         self.assertEqual(content, "{'ha_ha': 'included_var'}")
         with open(file_path_5, 'r') as f:
             content = f.read()
-        self.assertEqual(content, "test: |\n  {{ hello world }}\n  new\n  line\n  {{ hello world1 }}\n")
+        self.assertEqual(content, "test: |\n  {{ hello world1 }}\n\n  {{ hello world }}\n  new\n  line")
 
     def test_no_templates_in_kubectl(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
@@ -128,3 +128,14 @@ class TestTemplating(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             r._get_template_tags(template)
         self.assertTrue('unexpected type' in str(context.exception))
+
+    def test_generate_group_templates(self):
+        r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
+        context = config.load_context_section('test_groups')
+        r.generate_by_context(context)
+        file_path_1 = '{}/template1.yaml'.format(settings.TEMP_DIR)
+        file_path_2 = '{}/template2.yaml'.format(settings.TEMP_DIR)
+        file_path_3 = '{}/template3.yaml'.format(settings.TEMP_DIR)
+        self.assertTrue(os.path.exists(file_path_1))
+        self.assertTrue(os.path.exists(file_path_2))
+        self.assertTrue(os.path.exists(file_path_3))

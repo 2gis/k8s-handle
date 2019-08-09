@@ -70,3 +70,11 @@ section_with_kubectl:
     - template: template2.yaml.j2
     - template: template3.yaml.j2
     - template: innerdir/template1.yaml.j2
+
+test_groups:
+  templates:
+    - template: template1.yaml.j2
+    - group:
+        - group:
+            - template: template2.yaml.j2
+        - template: template3.yaml.j2

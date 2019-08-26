@@ -130,7 +130,7 @@ Configure checkout for https://github.com/2gis/k8s-handle-example.git and specif
 Also you need to setup next env vars:
 * K8S_NAMESPACE
 * K8S_MASTER_URI
-* K8S_CA_BASE64
+* K8S_CA_BASE64 (optional)
 * K8S_TOKEN
 
 use image 2gis/k8s-handle:<version or latest>

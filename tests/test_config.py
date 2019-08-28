@@ -244,12 +244,6 @@ class TestPriorityEvaluation(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             evaluator.k8s_client_configuration()
 
-    def test_k8s_client_configuration_missing_k8s_ca(self):
-        evaluator = PriorityEvaluator({KEY_K8S_MASTER_URI: VALUE_CLI, KEY_K8S_TOKEN: VALUE_CLI}, {}, {})
-
-        with self.assertRaises(RuntimeError):
-            evaluator.k8s_client_configuration()
-
     def test_k8s_client_configuration_missing_token(self):
         evaluator = PriorityEvaluator({
             KEY_K8S_MASTER_URI: VALUE_CLI,

@@ -48,7 +48,6 @@ class PriorityEvaluator:
     def k8s_client_configuration(self):
         for parameter, value in {
             KEY_K8S_MASTER_URI: self._k8s_master_uri(),
-            KEY_K8S_CA_BASE64: self._k8s_ca_base64(),
             KEY_K8S_TOKEN: self._k8s_token()
         }.items():
             if value:
@@ -59,7 +58,10 @@ class PriorityEvaluator:
 
         configuration = client.Configuration()
         configuration.host = self._k8s_master_uri()
-        configuration.ssl_ca_cert = write_file_tmp(b64decode(self._k8s_ca_base64()).encode('utf-8'))
+
+        if self._k8s_ca_base64():
+            configuration.ssl_ca_cert = write_file_tmp(b64decode(self._k8s_ca_base64()).encode('utf-8'))
+
         configuration.api_key = {"authorization": "Bearer " + self._k8s_token()}
         configuration.debug = self._k8s_handle_debug()
         return configuration

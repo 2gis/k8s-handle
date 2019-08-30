@@ -10,11 +10,10 @@ class TestApiDeprecationChecker(unittest.TestCase):
         checker = ApiDeprecationChecker("1.9.7")
         checker.deprecated_versions = {
             "test/v1": {
-                "since": "1.8.0",
-                "until": "1.10.0",
-                "resources": [
-                    "Deployment",
-                ],
+                "Deployment": {
+                    "since": "1.8.0",
+                    "until": "1.10.0",
+                },
             }
         }
         self.assertFalse(checker._is_deprecated("test/v2", "Deployment"))
@@ -23,11 +22,10 @@ class TestApiDeprecationChecker(unittest.TestCase):
         checker = ApiDeprecationChecker("1.9.7")
         checker.deprecated_versions = {
             "test/v1": {
-                "since": "1.8.0",
-                "until": "1.10.0",
-                "resources": [
-                    "Deployment",
-                ],
+                "Deployment": {
+                    "since": "1.8.0",
+                    "until": "1.10.0",
+                },
             }
         }
         self.assertFalse(checker._is_deprecated("test/v1", "StatefulSet"))
@@ -36,11 +34,10 @@ class TestApiDeprecationChecker(unittest.TestCase):
         checker = ApiDeprecationChecker("1.7.9")
         checker.deprecated_versions = {
             "test/v1": {
-                "since": "1.8.0",
-                "until": "1.10.0",
-                "resources": [
-                    "Deployment",
-                ],
+                "Deployment": {
+                    "since": "1.8.0",
+                    "until": "1.10.0",
+                },
             }
         }
         self.assertFalse(checker._is_deprecated("test/v1", "Deployment"))
@@ -49,11 +46,10 @@ class TestApiDeprecationChecker(unittest.TestCase):
         checker = ApiDeprecationChecker("1.8.0")
         checker.deprecated_versions = {
             "test/v1": {
-                "since": "1.8.0",
-                "until": "1.10.0",
-                "resources": [
-                    "Deployment",
-                ],
+                "Deployment": {
+                    "since": "1.8.0",
+                    "until": "1.10.0",
+                },
             }
         }
         self.assertTrue(checker._is_deprecated("test/v1", "Deployment"))
@@ -62,11 +58,10 @@ class TestApiDeprecationChecker(unittest.TestCase):
         checker = ApiDeprecationChecker("1.9.9")
         checker.deprecated_versions = {
             "test/v1": {
-                "since": "1.8.0",
-                "until": "1.10.0",
-                "resources": [
-                    "Deployment",
-                ],
+                "Deployment": {
+                    "since": "1.8.0",
+                    "until": "1.10.0",
+                },
             }
         }
         self.assertTrue(checker._is_deprecated("test/v1", "Deployment"))
@@ -75,11 +70,10 @@ class TestApiDeprecationChecker(unittest.TestCase):
         checker = ApiDeprecationChecker("1.10.0")
         checker.deprecated_versions = {
             "test/v1": {
-                "since": "1.8.0",
-                "until": "1.10.0",
-                "resources": [
-                    "Deployment",
-                ],
+                "Deployment": {
+                    "since": "1.8.0",
+                    "until": "1.10.0",
+                },
             }
         }
         with self.assertRaises(DeprecationError):
@@ -89,11 +83,10 @@ class TestApiDeprecationChecker(unittest.TestCase):
         checker = ApiDeprecationChecker("1.10.6")
         checker.deprecated_versions = {
             "test/v1": {
-                "since": "1.8.0",
-                "until": "1.10.0",
-                "resources": [
-                    "Deployment",
-                ],
+                "Deployment": {
+                    "since": "1.8.0",
+                    "until": "1.10.0",
+                },
             }
         }
         with self.assertRaises(DeprecationError):
@@ -103,11 +96,10 @@ class TestApiDeprecationChecker(unittest.TestCase):
         checker = ApiDeprecationChecker("1.10.6")
         checker.deprecated_versions = {
             "test/v1": {
-                "since": "1.8.0",
-                "until": "",
-                "resources": [
-                    "Deployment",
-                ],
+                "Deployment": {
+                    "since": "1.8.0",
+                    "until": "",
+                },
             }
         }
         self.assertTrue(checker._is_deprecated("test/v1", "Deployment"))

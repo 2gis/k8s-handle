@@ -35,7 +35,7 @@ class ApiDeprecationChecker:
                 },
                 "Ingress": {
                     "since": "1.14.0",
-                    "until": "1.19.0",
+                    "until": "1.20.0",
                 },
             },
             "apps/v1beta1": {
@@ -84,6 +84,22 @@ class ApiDeprecationChecker:
                 "PriorityClass": {
                     "since": "1.14.0",
                     "until": "1.17.0",
+                },
+            },
+            "apiextensions.k8s.io/v1beta1": {
+                "CustomResourceDefinition": {
+                    "since": "1.16.0",
+                    "until": "1.19.0",
+                },
+            },
+            "admissionregistration.k8s.io/v1beta1": {
+                "MutatingWebhookConfiguration": {
+                    "since": "1.16.0",
+                    "until": "1.19.0",
+                },
+                "ValidatingWebhookConfiguration": {
+                    "since": "1.16.0",
+                    "until": "1.19.0",
                 },
             },
         }

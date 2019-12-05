@@ -122,7 +122,7 @@ INFO:k8s.resource:Deployment "k8s-starter-kit" does not exist, create it
 ```
 
 # Usage with CI/CD tools
-If you using Gitlab CI, TeamCity or something else, you can use docker runner/agent, script will slightly different: 
+If you are using Gitlab CI, TeamCity or something else, you can use docker runner/agent, script will be slightly different: 
 ```bash
 $ k8s-handle deploy -s staging
 ```

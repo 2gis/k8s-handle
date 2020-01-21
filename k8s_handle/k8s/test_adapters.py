@@ -210,7 +210,7 @@ class TestAdapterCustomKind(unittest.TestCase):
         return ResourcesAPIMock(
             'version',
             'group/version',
-            [V1APIResource(None, 'group', 'kind', 'kinds', True, [], 'kind', [])]
+            [V1APIResource(None, 'group', 'kind', 'kinds', True, [], 'kind', [], verbs=[])]
         )
 
     def test_initialization_positive(self):

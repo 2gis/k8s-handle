@@ -6,7 +6,7 @@ class DeprecationError(Exception):
     pass
 
 
-class NotResourceAvailableError(Exception):
+class ResourceNotAvailableError(Exception):
     pass
 
 

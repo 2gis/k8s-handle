@@ -16,6 +16,8 @@ class TestCoreResourceGetter(TestCase):
     def test_is_processable_version(self):
         self.assertTrue(self.getter.is_processable_version("v1"))
         self.assertFalse(self.getter.is_processable_version("app/v1"))
+        self.assertFalse(self.getter.is_processable_version("/"))
+        self.assertFalse(self.getter.is_processable_version(""))
 
     def test_get_resources_by_version(self):
         self.assertSetEqual({"Pod", "CronJob"}, self.getter.get_resources_by_version("v1"))
@@ -33,6 +35,8 @@ class TestRegularResourceGetter(TestCase):
         self.assertFalse(self.getter.is_processable_version("v1"))
         self.assertTrue(self.getter.is_processable_version("app/betav1"))
         self.assertTrue(self.getter.is_processable_version("app/v1"))
+        self.assertFalse(self.getter.is_processable_version("/"))
+        self.assertFalse(self.getter.is_processable_version(""))
 
     def test_get_resources_by_version(self):
         self.assertSetEqual({"Pod", "CronJob"}, self.getter.get_resources_by_version("app/v1"))

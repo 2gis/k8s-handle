@@ -1,7 +1,7 @@
 from typing import List
 
 from k8s_handle.templating import get_template_contexts
-from k8s_handle.exceptions import NotResourceAvailableError
+from k8s_handle.exceptions import ResourceNotAvailableError
 
 from .resource_getters import AbstractResourceGetter
 
@@ -22,10 +22,9 @@ class ResourceAvailabilityChecker(object):
 
     def run(self, file_path: str):
         for template_body in get_template_contexts(file_path):
-            available = self._is_available_kind(template_body.get('apiVersion'), template_body.get('kind'))
-
-            if not available:
-                msg = "The resource with kind {} is not supported with version {}. File: {}"
-                raise NotResourceAvailableError(
-                    msg.format(template_body.get('kind'), template_body.get('apiVersion'), file_path)
+            if not self._is_available_kind(template_body.get('apiVersion'), template_body.get('kind')):
+                raise ResourceNotAvailableError(
+                    "The resource with kind {} is not supported with version {}. File: {}".format(
+                        template_body.get('kind'), template_body.get('apiVersion'), file_path
+                    )
                 )

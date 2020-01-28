@@ -5,7 +5,7 @@ from .resource_getters import CoreResourceGetter, RegularResourceGetter
 from .mocks import MockResource
 
 from k8s_handle.k8s.mocks import ResourcesAPIMock
-from k8s_handle.exceptions import NotResourceAvailableError
+from k8s_handle.exceptions import ResourceNotAvailableError
 
 
 class TestAvailabilityChecker(TestCase):
@@ -31,9 +31,9 @@ class TestAvailabilityChecker(TestCase):
         self.checker.run('k8s_handle/k8s/fixtures/valid_version.yaml')
 
     def test_run_with_invalid_version(self):
-        with self.assertRaises(NotResourceAvailableError):
+        with self.assertRaises(ResourceNotAvailableError):
             self.checker.run('k8s_handle/k8s/fixtures/invalid_version.yaml')
 
     def test_run_with_unsupported_version(self):
-        with self.assertRaises(NotResourceAvailableError):
+        with self.assertRaises(ResourceNotAvailableError):
             self.checker.run('k8s_handle/k8s/fixtures/unsupported_version.yaml')

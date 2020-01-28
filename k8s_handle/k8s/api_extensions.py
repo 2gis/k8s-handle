@@ -49,10 +49,11 @@ class CoreResourcesAPI(client.CoreApi):
     def list_api_resources(self, version):
         try:
             return self.api_client.call_api(
-                '/api/{}'.format(version), 'GET',
-                {},
-                [],
-                {
+                resource_path='/api/{}'.format(version),
+                method='GET',
+                path_params={},
+                query_params=[],
+                header_params={
                     'Accept': self.api_client.select_header_accept(
                         ['application/json', 'application/yaml', 'application/vnd.kubernetes.protobuf']
                     ),

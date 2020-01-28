@@ -11,7 +11,7 @@ from kubernetes.config import list_kube_config_contexts, load_kube_config
 from k8s_handle import config
 from k8s_handle import settings
 from k8s_handle import templating
-from k8s_handle.exceptions import DeprecationError, ProvisioningError, NotResourceAvailableError
+from k8s_handle.exceptions import DeprecationError, ProvisioningError, ResourceNotAvailableError
 from k8s_handle.filesystem import InvalidYamlError
 from k8s_handle.k8s.deprecation_checker import ApiDeprecationChecker
 from k8s_handle.k8s.provisioner import Provisioner
@@ -235,7 +235,7 @@ def main():
     except RuntimeError as e:
         log.error('RuntimeError: {}'.format(e))
         sys.exit(1)
-    except NotResourceAvailableError as e:
+    except ResourceNotAvailableError as e:
         log.error('{}'.format(e))
         sys.exit(1)
     except ProvisioningError:

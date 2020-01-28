@@ -25,8 +25,7 @@ class ResourceAvailabilityChecker(object):
             available = self._is_available_kind(template_body.get('apiVersion'), template_body.get('kind'))
 
             if not available:
-                raise NotResourceAvailableError("The resource with kind {} is not supported with version {}. File: {}".format(
-                    template_body.get('kind'),
-                    template_body.get('apiVersion'),
-                    file_path
-                ))
+                msg = "The resource with kind {} is not supported with version {}. File: {}"
+                raise NotResourceAvailableError(
+                    msg.format(template_body.get('kind'), template_body.get('apiVersion'), file_path)
+                )

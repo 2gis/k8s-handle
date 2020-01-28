@@ -7,10 +7,10 @@ VERSION_DELIMITER = "/"
 
 class AbstractResourceGetter(object):
     def is_processable_version(self, api_group: str) -> bool:
-        raise NotImplemented
+        raise NotImplementedError
 
     def get_resources_by_version(self, api_group: str) -> Set[str]:
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class CoreResourceGetter(AbstractResourceGetter):

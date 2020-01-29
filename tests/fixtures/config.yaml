@@ -61,6 +61,16 @@ not_existent_template:
   templates:
   - template: doesnotexist.yaml.j2
 
+templates_regex:
+  templates:
+    - template: innerdir/.*\.j2
+    - template: template1.yaml.j2
+
+templates_regex_invalid:
+  templates:
+    - template: '['
+    - template: template1.yaml.j2
+
 section_with_kubectl:
   dirs:
     - dst: /tmp/test_directory1/

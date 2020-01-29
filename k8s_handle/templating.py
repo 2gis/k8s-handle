@@ -3,6 +3,7 @@ import glob
 import itertools
 import logging
 import os
+import re
 from hashlib import sha256
 
 import yaml
@@ -103,11 +104,29 @@ class Renderer:
             for nested_entry in self._iterate_entries(entry.get("group", []), entry.get("tags")):
                 yield nested_entry
 
+    def _preprocess_templates(self, templates):
+        output = []
+        for template in templates:
+            tags = template.get('tags', [])
+            new_templates = []
+            try:
+                regex = re.compile(template.get('template'))
+                new_templates = list(
+                    map(lambda x: {'template': x, 'tags': tags}, filter(regex.search, self._env.list_templates())))
+            except Exception as e:
+                log.warning(f'Exception during preprocess {template}, {e}, passing it as is')
+
+            if len(new_templates) == 0:
+                output.append(template)
+            else:
+                output += new_templates
+        return output
+
     def generate_by_context(self, context):
         if context is None:
             raise RuntimeError('Can\'t generate templates from None context')
 
-        templates = context.get('templates', [])
+        templates = self._preprocess_templates(context.get('templates', []))
         if len(templates) == 0:
             templates = context.get('kubectl', [])
             if len(templates) == 0:

@@ -139,3 +139,27 @@ class TestTemplating(unittest.TestCase):
         self.assertTrue(os.path.exists(file_path_1))
         self.assertTrue(os.path.exists(file_path_2))
         self.assertTrue(os.path.exists(file_path_3))
+
+    def test_templates_regex(self):
+        r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
+        context = config.load_context_section('templates_regex')
+        file_path_1 = '{}/template1.yaml'.format(settings.TEMP_DIR)
+        file_path_2 = '{}/template2.yaml'.format(settings.TEMP_DIR)
+        file_path_3 = '{}/template3.yaml'.format(settings.TEMP_DIR)
+        file_path_4 = '{}/template4.yaml'.format(settings.TEMP_DIR)
+        file_path_5 = '{}/innerdir/template1.yaml'.format(settings.TEMP_DIR)
+        file_path_6 = '{}/template_include_file.yaml'.format(settings.TEMP_DIR)
+        r.generate_by_context(context)
+        self.assertTrue(os.path.exists(file_path_1))
+        self.assertFalse(os.path.exists(file_path_2))
+        self.assertFalse(os.path.exists(file_path_3))
+        self.assertFalse(os.path.exists(file_path_4))
+        self.assertTrue(os.path.exists(file_path_5))
+        self.assertFalse(os.path.exists(file_path_6))
+
+    def test_templates_regex_parse_failed(self):
+        r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
+        c = config.load_context_section('templates_regex_invalid')
+        with self.assertRaises(TemplateRenderingError) as context:
+            r.generate_by_context(c)
+        self.assertTrue('Processing [: template [ hasn\'t been found' in str(context.exception))

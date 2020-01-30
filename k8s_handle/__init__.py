@@ -236,7 +236,7 @@ def main():
         log.error('RuntimeError: {}'.format(e))
         sys.exit(1)
     except ResourceNotAvailableError as e:
-        log.error('{}'.format(e))
+        log.error('Resource not available: {}'.format(e))
         sys.exit(1)
     except ProvisioningError:
         sys.exit(1)

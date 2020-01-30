@@ -51,8 +51,6 @@ class CoreResourcesAPI(client.CoreApi):
             return self.api_client.call_api(
                 resource_path='/api/{}'.format(version),
                 method='GET',
-                path_params={},
-                query_params=[],
                 header_params={
                     'Accept': self.api_client.select_header_accept(
                         ['application/json', 'application/yaml', 'application/vnd.kubernetes.protobuf']
@@ -61,16 +59,10 @@ class CoreResourcesAPI(client.CoreApi):
                         ['application/json', 'application/yaml', 'application/vnd.kubernetes.protobuf']
                     )
                 },
-                body=None,
-                post_params=[],
-                files={},
                 response_type='V1APIResourceList',
                 auth_settings=['BearerToken'],
-                async_req=None,
                 _return_http_data_only=True,
                 _preload_content=True,
-                _request_timeout=None,
-                collection_formats={}
             )
         except ApiException as e:
             if e.reason == 'Not Found':

@@ -314,3 +314,9 @@ class ResourcesAPIMock:
             return None
 
         return V1APIResourceList(self._api_version, self._group_version, self._kind, self._resources)
+
+    def list_api_resources(self, version):
+        if not self._resources or self._group_version != version:
+            return None
+
+        return V1APIResourceList(self._api_version, self._group_version, self._kind, self._resources)

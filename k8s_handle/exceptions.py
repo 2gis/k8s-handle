@@ -6,6 +6,10 @@ class DeprecationError(Exception):
     pass
 
 
+class ResourceNotAvailableError(Exception):
+    pass
+
+
 class InvalidYamlError(Exception):
     pass
 

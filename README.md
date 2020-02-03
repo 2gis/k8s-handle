@@ -276,6 +276,7 @@ Templates in k8s-handle use jinja2 syntax and support all standard filters + som
 * `{{ my_var | b64encode }}` - encode value of my_var to base64
 * `{{ my_var | b64decode }}` - decode value of my_var from base64
 * `{{ my_var | hash_sha256 }}` - encode value of my_var to sha256sum
+* `{{ my_var | to_yaml(flow_style=True, width=99999) }}` - Tries to render yaml representation of given variable(flow_style=True - render in one line, False multiline. width - max line width for rendered yaml lines) 
 > Warning: You can use filters only for templates and can't for config.yaml
 ### Functions
 * `{{ include_file('my_file.txt') }}` - include my_file.txt to resulting resource w/o parsing it, useful for include configs to configmap.

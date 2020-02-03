@@ -71,6 +71,23 @@ templates_regex_invalid:
     - template: '['
     - template: template1.yaml.j2
 
+test_filters:
+  to_base64: hello world
+  from_base64: azhzLWhhbmRsZQ==
+  to_sha256: k8s-hanle
+  affinity:
+    - key: "dedicated"
+      operator: "Equal"
+      value: "monitoring"
+      effect: "NoSchedule"
+    - key: "dedicated"
+      operator: "Equal"
+      value:
+        hello: world
+      effect: "NoSchedule"
+  templates:
+    - template: filters.yaml.j2
+
 section_with_kubectl:
   dirs:
     - dst: /tmp/test_directory1/

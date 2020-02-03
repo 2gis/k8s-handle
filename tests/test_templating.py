@@ -1,4 +1,5 @@
 import os
+import yaml
 import shutil
 import unittest
 from k8s_handle import settings
@@ -163,3 +164,19 @@ class TestTemplating(unittest.TestCase):
         with self.assertRaises(TemplateRenderingError) as context:
             r.generate_by_context(c)
         self.assertTrue('Processing [: template [ hasn\'t been found' in str(context.exception))
+
+    def test_filters(self):
+        r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
+        context = config.load_context_section('test_filters')
+        r.generate_by_context(context)
+        result = '{}/filters.yaml'.format(settings.TEMP_DIR)
+        with open(result, 'r') as f:
+            actual = yaml.safe_load(f)
+        self.assertEqual('aGVsbG8gd29ybGQ=', actual.get('b64encode'))
+        self.assertEqual('k8s-handle', actual.get('b64decode'))
+        self.assertEqual('8fae6dd899aace000fd494fd6d795e26e2c85bf8e59d4262ef56b03dc91e924c', actual.get('sha256'))
+        affinity = [
+            {'effect': 'NoSchedule', 'key': 'dedicated', 'operator': 'Equal', 'value': 'monitoring'},
+            {'effect': 'NoSchedule', 'key': 'dedicated', 'operator': 'Equal', 'value': {'hello': 'world'}}
+        ]
+        self.assertEqual(affinity, actual.get('affinity'))

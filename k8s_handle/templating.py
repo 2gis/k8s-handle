@@ -59,6 +59,10 @@ def hash_sha256(string):
     return res.hexdigest()
 
 
+def to_yaml(data, flow_style=True, width=99999):
+    return yaml.safe_dump(data, default_flow_style=flow_style, width=width)
+
+
 def get_env(templates_dir):
     # https://stackoverflow.com/questions/9767585/insert-static-files-literally-into-jinja-templates-without-parsing-them
     def include_file(path):
@@ -76,6 +80,7 @@ def get_env(templates_dir):
     env.filters['b64decode'] = b64decode
     env.filters['b64encode'] = b64encode
     env.filters['hash_sha256'] = hash_sha256
+    env.filters['to_yaml'] = to_yaml
     env.globals['include_file'] = include_file
 
     log.debug('Available templates in path {}: {}'.format(templates_dir, env.list_templates()))

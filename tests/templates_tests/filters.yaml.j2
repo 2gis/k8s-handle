@@ -1,0 +1,4 @@
+b64encode: {{ to_base64 | b64encode }}
+b64decode: {{ from_base64 | b64decode }}
+sha256: {{ to_sha256 | hash_sha256 }}
+affinity: {{ affinity | to_yaml() }}

@@ -52,8 +52,8 @@ k8s-handle is a helm alternative, but without package manager
 
 # k8s-handle vs helm
 * k8s-handle acts like template parser and provisioning tool, but not package manager included like in helm
-* k8s-handle don't need in cluster tools like The Tiller Server, you need only ServiceAccount for deploy
-* k8s-handle secure by default, you don't need to generate any certificates for deploying application, k8s-handle uses kubernetes REST API with https, like kubectl
+* k8s-handle doesn't need cluster tools like The Tiller Server, you need only ServiceAccount for deploy
+* k8s-handle is secure by default, you don't need to generate any certificates for deploying application, k8s-handle uses kubernetes REST API with https, like kubectl
 
 ![Deploy process](/helmVsK8s-handle.png)
 

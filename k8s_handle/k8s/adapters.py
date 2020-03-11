@@ -31,6 +31,7 @@ class Adapter:
         'rbac.authorization.k8s.io/v1': client.RbacAuthorizationV1Api,
         'scheduling.k8s.io/v1alpha1': client.SchedulingV1alpha1Api,
         'scheduling.k8s.io/v1beta1': client.SchedulingV1beta1Api,
+        'scheduling.k8s.io/v1': client.SchedulingV1Api,
         'networking.k8s.io/v1': client.NetworkingV1Api,
         'apiextensions.k8s.io/v1beta1': client.ApiextensionsV1beta1Api,
     }

@@ -111,6 +111,9 @@ class TestTemplating(unittest.TestCase):
         self.assertFalse(r._evaluate_tags(tags, only_tags=['tag1'], skip_tags=['tag1']))
         self.assertFalse(r._evaluate_tags(tags, only_tags=None, skip_tags=['tag1']))
         self.assertTrue(r._evaluate_tags(tags, only_tags=None, skip_tags=['tag4']))
+        tags = set()
+        self.assertFalse(r._evaluate_tags(tags, only_tags=['tag4'], skip_tags=None))
+        self.assertTrue(r._evaluate_tags(tags, only_tags=None, skip_tags=['tag4']))
 
     def test_get_template_tags(self):
         r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))

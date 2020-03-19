@@ -195,7 +195,10 @@ class Renderer:
 
     @staticmethod
     def _evaluate_tags(tags, only_tags, skip_tags):
-        if only_tags is None and skip_tags is None:
-            return True
+        if only_tags and tags.isdisjoint(only_tags):
+            return False
 
-        return tags.isdisjoint(skip_tags or []) and not tags.isdisjoint(only_tags or tags)
+        if skip_tags and not tags.isdisjoint(skip_tags):
+            return False
+
+        return True

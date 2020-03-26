@@ -33,6 +33,7 @@ class Adapter:
         'scheduling.k8s.io/v1beta1': client.SchedulingV1beta1Api,
         'scheduling.k8s.io/v1': client.SchedulingV1Api,
         'networking.k8s.io/v1': client.NetworkingV1Api,
+        'networking.k8s.io/v1beta1': client.NetworkingV1beta1Api,
         'apiextensions.k8s.io/v1beta1': client.ApiextensionsV1beta1Api,
     }
     kinds_builtin = [

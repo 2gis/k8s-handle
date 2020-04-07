@@ -25,50 +25,6 @@ class Provisioner:
         return all(r == replicas[0] for r in replicas)
 
     @staticmethod
-    def _ports_are_equal(old_port, new_port):
-        for new_key in new_port.keys():
-            old_key = split_str_by_capital_letters(new_key)
-            if getattr(old_port, old_key, None) != new_port.get(new_key, None):
-                return False
-        return True
-
-    @staticmethod
-    def _get_missing_items_in_metadata_field(items, metadata, field):
-        if field not in metadata:
-            result = [item for item in items if 'kubernetes.io' not in item]
-        else:
-            result = [item for item in items if
-                      item not in metadata[field] and 'kubernetes.io' not in item]
-
-        return result
-
-    @staticmethod
-    def _port_obj_to_str(port):
-        if hasattr(port, 'name') and hasattr(port, 'port'):
-            return '{} ({})'.format(port.name, port.port)
-        return '{}'.format(port.port)
-
-    def _notify_about_missing_items_in_template(self, items, missing_type):
-        skull = r"""
-       ___
-    .-'   `-.
-   /  \   /  \\     Please pay attention to service {type}s!
-  .   o\ /o   .    The next {type}(s) missing in template:
-  |___  ^  ___|    "{list}"
-      |___|        They won\'t be deleted after service apply.
-      |||||
-                    """
-
-        if len(items) != 0:
-            if missing_type in ['port', ]:
-                items = [self._port_obj_to_str(item) for item in items]
-
-            log_text = skull.format(type=missing_type, list=', '.join(items))
-            if settings.GET_ENVIRON_STRICT:
-                raise RuntimeError(log_text)
-            log.warning(log_text)
-
-    @staticmethod
     def _is_job_complete(status):
         if status.failed is not None:
             raise RuntimeError('Job running failed')
@@ -79,60 +35,6 @@ class Provisioner:
                     return True
         else:
             return False
-
-    def _get_missing_annotations_and_labels(self, old_metadata, new_metadata):
-        missing_annotations = []
-        missing_labels = []
-
-        if hasattr(old_metadata, 'annotations') and old_metadata.annotations is not None:
-            missing_annotations = self._get_missing_items_in_metadata_field(
-                old_metadata.annotations, new_metadata, 'annotations')
-        if hasattr(old_metadata, 'labels') and old_metadata.labels is not None:
-            missing_labels = self._get_missing_items_in_metadata_field(
-                old_metadata.labels, new_metadata, 'labels')
-
-        return missing_annotations, missing_labels
-
-    def _get_apply_ports(self, old_spec, new_spec):
-        ports = []
-
-        if hasattr(old_spec, 'ports') and old_spec.ports is not None:
-            if 'ports' not in new_spec:
-                return []
-
-            new_ports = new_spec['ports']
-            for old_port in old_spec.ports:
-                res = [item for item in new_ports if item['port'] == old_port.port]
-
-                if len(res) == 0:
-                    log.warning('Port {} will be deleted'.format(old_port.port))
-                    ports.append({'$patch': 'delete', 'port': old_port.port})
-
-                if len(res) == 1:
-                    new_port = self._add_defaults_to_port(res[0])
-                    if not self._ports_are_equal(old_port, new_port):
-                        ports.append(new_port)
-
-            for new_port in new_ports:
-                res = [item for item in old_spec.ports if item.port == new_port['port']]
-
-                if len(res) == 0:
-                    ports.append(new_port)
-
-        return ports
-
-    @staticmethod
-    def _add_defaults_to_port(port):
-        if 'name' not in port:
-            port['name'] = None
-        if 'nodePort' not in port:
-            port['node_port'] = None
-        if 'protocol' not in port:
-            port['protocol'] = 'TCP'
-        if 'targetPort' not in port:
-            port['target_port'] = port['port']
-
-        return port
 
     def run(self, file_path):
         if self.command == 'deploy':
@@ -193,15 +95,8 @@ class Provisioner:
             parameters = {}
 
             if template_body['kind'] == 'Service':
-                missing_annotations, missing_labels = \
-                    self._get_missing_annotations_and_labels(resource.metadata, template_body['metadata'])
-                parameters['ports'] = self._get_apply_ports(resource.spec, template_body['spec'])
-
-                self._notify_about_missing_items_in_template(missing_annotations, 'annotation')
-                self._notify_about_missing_items_in_template(missing_labels, 'label')
-
-                if parameters['ports']:
-                    log.info('Next ports will be applied: {}'.format(parameters['ports']))
+                if hasattr(resource.spec, 'cluster_ip'):
+                    parameters['clusterIP'] = resource.spec.cluster_ip
 
             if template_body['kind'] == 'PersistentVolumeClaim':
                 if self._is_pvc_specs_equals(resource.spec, template_body['spec']):
@@ -213,8 +108,9 @@ class Provisioner:
                     log.warning('PersistentVolume has "{}" status, skip replacing'.format(resource.status.phase))
                     return
 
-            if template_body['kind'] in ['CustomResourceDefinition', 'PodDisruptionBudget']:
-                parameters['resourceVersion'] = resource.metadata.resource_version
+            if template_body['kind'] in ['Service', 'CustomResourceDefinition', 'PodDisruptionBudget']:
+                if hasattr(resource.metadata, 'resource_version'):
+                    parameters['resourceVersion'] = resource.metadata.resource_version
 
             kube_client.replace(parameters)
 

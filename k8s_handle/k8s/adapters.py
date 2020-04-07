@@ -141,24 +141,28 @@ class AdapterBuiltinKind(Adapter):
             raise ProvisioningError(e)
         except ValueError as e:
             log.error(e)
-            # WORKAROUND https://github.com/kubernetes-client/gen/issues/52, https://github.com/kubernetes-client/python/issues/1098
+            # WORKAROUND:
+            # - https://github.com/kubernetes-client/gen/issues/52
+            # - https://github.com/kubernetes-client/python/issues/1098
             if self.kind not in ['custom_resource_definition', 'horizontal_pod_autoscaler']:
                 raise e
 
     def replace(self, parameters):
         try:
-            if self.kind in ['custom_resource_definition', 'pod_disruption_budget']:
-                self.body['metadata']['resourceVersion'] = parameters['resourceVersion']
+            if self.kind in ['service', 'custom_resource_definition', 'pod_disruption_budget']:
+                if 'resourceVersion' in parameters:
+                    self.body['metadata']['resourceVersion'] = parameters['resourceVersion']
+
+            if self.kind in ['service']:
+                if 'clusterIP' not in self.body['spec'] and 'clusterIP' in parameters:
+                    self.body['spec']['clusterIP'] = parameters['clusterIP']
 
             if self.kind in ['custom_resource_definition']:
                 return self.api.replace_custom_resource_definition(
                     self.name, self.body,
                 )
 
-            if self.kind in ['service', 'service_account']:
-                if 'spec' in self.body:
-                    self.body['spec']['ports'] = parameters.get('ports')
-
+            if self.kind in ['service_account']:
                 return getattr(self.api, 'patch_namespaced_{}'.format(self.kind))(
                     name=self.name, body=self.body, namespace=self.namespace
                 )

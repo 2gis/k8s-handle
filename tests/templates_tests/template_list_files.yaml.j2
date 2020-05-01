@@ -1,0 +1,7 @@
+test: |
+  {% for f in list_files('templates_tests/innerdir') -%}
+  {{ f.split('/')[-1] }}:
+  {% endfor -%}
+  {% for f in list_files('templates_tests/my_file*.txt') -%}
+  {{ f.split('/')[-1] }}:
+  {% endfor -%}

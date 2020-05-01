@@ -68,10 +68,18 @@ def get_env(templates_dir):
     def include_file(path):
         path = os.path.join(templates_dir, '../', path)
         output = []
-        for file_path in glob.glob(path):
+        for file_path in sorted(glob.glob(path)):
             with open(file_path, 'r') as f:
                 output.append(f.read())
         return '\n'.join(output)
+
+    def list_files(path):
+        path = os.path.join(templates_dir, '../', path)
+        if os.path.isdir(path):
+            files = [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+        else:
+            files = glob.glob(path)
+        return sorted(files)
 
     env = Environment(
         undefined=StrictUndefined,
@@ -82,6 +90,7 @@ def get_env(templates_dir):
     env.filters['hash_sha256'] = hash_sha256
     env.filters['to_yaml'] = to_yaml
     env.globals['include_file'] = include_file
+    env.globals['list_files'] = list_files
 
     log.debug('Available templates in path {}: {}'.format(templates_dir, env.list_templates()))
     return env

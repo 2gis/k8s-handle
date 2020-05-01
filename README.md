@@ -288,7 +288,8 @@ templates
 my_file.txt
 ...
 ``` 
-> Note, `include_file` also support unix glob. You can import all files from directory conf.d/*.conf for example.
+* `{{ list_files('dir/or/glob*') }}` - returns list of files in specified directory. Useful for including all files in folder to configmap. You specify directory path relative to parent of templates folder.
+> Note, both fuctions support unix glob. You can import all files from directory `conf.d/*.conf` for example.
 
 You can put *.j2 templates in 'templates' directory and specify it in config.yaml
 ```yaml

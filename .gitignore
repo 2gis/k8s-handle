@@ -99,8 +99,3 @@ ENV/
 
 # mypy
 .mypy_cache/
-
-# Apps
-*.DS_Store
-.vscode/
-.idea/

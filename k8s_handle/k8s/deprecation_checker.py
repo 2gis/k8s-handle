@@ -3,7 +3,6 @@ import logging
 import semver
 
 from k8s_handle.templating import get_template_contexts
-from k8s_handle.exceptions import DeprecationError
 
 log = logging.getLogger(__name__)
 
@@ -131,13 +130,7 @@ class ApiDeprecationChecker:
                     status="unsupported",
                     k8s_version=self.deprecated_versions[api_version][kind]["until"],
                 ))
-                raise DeprecationError(
-                    "Version {} for resourse type '{}' is unsupported since kubernetes {}".format(
-                        api_version,
-                        kind,
-                        self.deprecated_versions[api_version][kind]["until"]
-                    )
-                )
+                return True
 
         if self._is_server_version_greater(self.deprecated_versions[api_version][kind]["since"]):
             log.warning(message.format(

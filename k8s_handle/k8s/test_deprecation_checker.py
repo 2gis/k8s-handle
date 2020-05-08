@@ -1,6 +1,5 @@
 import unittest
 
-from k8s_handle.exceptions import DeprecationError
 from k8s_handle.k8s.deprecation_checker import ApiDeprecationChecker
 
 
@@ -76,8 +75,7 @@ class TestApiDeprecationChecker(unittest.TestCase):
                 },
             }
         }
-        with self.assertRaises(DeprecationError):
-            checker._is_deprecated("test/v1", "Deployment")
+        self.assertTrue(checker._is_deprecated("test/v1", "Deployment"))
 
     def test_version_is_unsupported(self):
         checker = ApiDeprecationChecker("1.10.6")
@@ -89,8 +87,7 @@ class TestApiDeprecationChecker(unittest.TestCase):
                 },
             }
         }
-        with self.assertRaises(DeprecationError):
-            checker._is_deprecated("test/v1", "Deployment")
+        self.assertTrue(checker._is_deprecated("test/v1", "Deployment"))
 
     def test_version_no_until(self):
         checker = ApiDeprecationChecker("1.10.6")

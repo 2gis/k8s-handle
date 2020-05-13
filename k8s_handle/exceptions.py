@@ -2,10 +2,6 @@ class ProvisioningError(Exception):
     pass
 
 
-class DeprecationError(Exception):
-    pass
-
-
 class ResourceNotAvailableError(Exception):
     pass
 

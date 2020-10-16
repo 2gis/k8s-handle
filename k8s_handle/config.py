@@ -188,11 +188,9 @@ def load_context_section(section):
     return context
 
 
-def get_all_nested_keys(result, d):
+def get_all_root_keys(result, d):
     for key, value in d.items():
         result.append(key)
-        if isinstance(d[key], dict):
-            get_all_nested_keys(result, d[key])
 
     return result
 
@@ -202,8 +200,8 @@ def get_vars_with_dashes(vars_list):
 
 
 def validate_dashes(context):
-    all_keys = get_all_nested_keys([], context)
+    all_keys = get_all_root_keys([], context)
     dashes = get_vars_with_dashes(all_keys)
     if len(dashes) != 0:
-        raise RuntimeError('Variable names should never include dashes, '
-                           'check your vars, please: {}'.format(', '.join(sorted(dashes))))
+        raise RuntimeError('Root variable names should never include dashes, '
+                           'check your vars please: {}'.format(', '.join(sorted(dashes))))

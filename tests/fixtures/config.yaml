@@ -10,6 +10,7 @@ common:
   k8s_token: token
   k8s_ca_base64: ca
   k8s_namespace: namespace
+
   var:
     router:
         your: 1
@@ -106,3 +107,12 @@ test_groups:
         - group:
             - template: template2.yaml.j2
         - template: template3.yaml.j2
+
+test_dashes:
+  templates:
+    - template: template-dashes.yaml.j2
+  region: us-east1
+  regionMap:
+    us-east1: do this
+    us-west1: do that
+

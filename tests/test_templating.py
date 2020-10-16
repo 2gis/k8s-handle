@@ -187,3 +187,12 @@ class TestTemplating(unittest.TestCase):
             {'effect': 'NoSchedule', 'key': 'dedicated', 'operator': 'Equal', 'value': {'hello': 'world'}}
         ]
         self.assertEqual(affinity, actual.get('affinity'))
+
+    def test_dashes(self):
+        r = templating.Renderer(os.path.join(os.path.dirname(__file__), 'templates_tests'))
+        context = config.load_context_section('test_dashes')
+        r.generate_by_context(context)
+        result = '{}/template-dashes.yaml'.format(settings.TEMP_DIR)
+        with open(result, 'r') as f:
+            actual = yaml.safe_load(f)
+        self.assertEqual('do this', actual)

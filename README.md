@@ -34,6 +34,7 @@ k8s-handle is a helm alternative, but without package manager
      * [Sync mode](#sync-mode)
      * [Strict mode](#strict-mode)
   * [Destroy](#destroy)
+  * [Diff](#diff)
   * [Operating without config.yaml](#operating-without-configyaml)
      * [Render](#render)
      * [Apply](#apply)
@@ -535,7 +536,7 @@ You can specify number of tries before k8s-handle exit with non zero exit code a
 In some cases k8s-handle warn you about ambiguous situations and keep working. With `--strict` mode k8s-handle warn and exit 
 with non zero code. For example when some used environment variables is empty.
 ```bash
-$ k8s-handle-os deploy -s staging --use-kubeconfig --strict
+$ k8s-handle deploy -s staging --use-kubeconfig --strict
 ERROR:__main__:RuntimeError: Environment variable "IMAGE_VERSION" is not set
 $ echo $?
 1
@@ -545,6 +546,13 @@ In some cases you need to destroy early created resources(demo env, deploy from 
 support `destroy` subcommand for you. Just use `destroy` instead of `deploy`. k8s-handle process destroy as deploy, but
 call delete kubernetes api calls instead of create or replace. 
 > Sync mode is available for destroy as well.
+
+### Diff
+You can get diff between objects in Kubernetes API and local working copy of configuration.
+```bash
+$ k8s-handle diff -s <section> --use-kubeconfig
+```
+> Secrets are ignored by security reasons
 
 ## Operating without config.yaml
 The most common way for the most of use cases is to operate with k8s-handle via `config.yaml`, specifying

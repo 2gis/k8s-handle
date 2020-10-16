@@ -56,6 +56,9 @@ class Diff:
     @staticmethod
     def run(file_path):
         for template_body in get_template_contexts(file_path):
+            if template_body.get('kind') == 'Secret':
+                log.info(f'Skipping secret {template_body.get("metadata", {}).get("name")}')
+                continue
             kube_client = Adapter.get_instance(template_body)
             new = yaml.safe_dump(template_body)
             k8s_object = kube_client.get()

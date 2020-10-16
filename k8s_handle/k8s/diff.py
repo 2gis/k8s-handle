@@ -1,5 +1,6 @@
 import sys
 import logging
+import copy
 from difflib import ndiff
 from datetime import datetime
 from functools import reduce
@@ -38,6 +39,11 @@ def to_dict(obj):
         return [to_dict(x) for x in obj]
     elif type(obj) == datetime:
         return str(obj)
+    elif type(obj) == dict:
+        newobj = copy.deepcopy(obj)
+        for k, v in obj.items():
+            newobj[k] = to_dict(obj[k])
+        return newobj
     else:
         return obj
 
@@ -74,7 +80,6 @@ class Diff:
             metadata = current_dict.get('metadata', {})
             if 'annotations' in metadata and metadata['annotations'] == {}:
                 del metadata['annotations']
-
             current = yaml.safe_dump(current_dict)
             if new == current:
                 log.info(f' Kind: "{template_body.get("kind")}", '

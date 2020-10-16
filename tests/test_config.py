@@ -108,10 +108,12 @@ class TestContextGeneration(unittest.TestCase):
         settings.TEMPLATES_DIR = 'templates_tests'
         settings.CONFIG_FILE = 'tests/fixtures/dashes_config.yaml'
         with self.assertRaises(RuntimeError) as context:
-            config.load_context_section('section')
-        self.assertTrue('Variable names should never include dashes, '
-                        'check your vars, please: my-nested-var, my-var, your-var'
+            config.load_context_section('not_allowed')
+        self.assertTrue('Root variable names should never include dashes, '
+                        'check your vars please: my-var, my-var-with-dashes'
                         in str(context.exception), context.exception)
+        c = config.load_context_section('allowed')
+        self.assertEqual(c.get('var').get('router').get('your'), 2)
 
     def test_context_update_recursion(self):
         my_dict = {

@@ -1,5 +1,4 @@
 common:
-  my-var: my_value
   my_file: "{{ file='tests/fixtures/include.yaml' }}"
   k8s_master_uri: https://localhost:5000
   k8s_token: token
@@ -9,11 +8,16 @@ common:
     router:
         your-var: 1
         my1: var1
-
-section:
   templates:
     - template: template1.yaml.j2
+
+allowed:
   var:
     router:
         my-nested-var: var
         your: 2
+
+not_allowed:
+  my-var: my_value
+  my-var-with-dashes: not allowed
+

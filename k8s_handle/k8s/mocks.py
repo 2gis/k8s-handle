@@ -267,37 +267,6 @@ class K8sClientMock:
             raise ApiException('Replace persistent volume claim fail')
 
 
-class ServiceMetadata:
-    labels = {}
-
-    def __init__(self, annotations, labels):
-        if annotations is not None:
-            self.annotations = annotations
-        self.labels = labels
-
-
-class ServiceSpec:
-    def __init__(self, case):
-        if case in ['case1', 'case2', 'case3']:
-            self.ports = [ServicePort(55)]
-        if case in ['case4', 'case5', 'case7', 'case8']:
-            self.ports = [ServicePort(55, 'test')]
-        if case in ['case6']:
-            self.ports = [ServicePort(55, 'test', 90)]
-
-
-class ServicePort:
-    def __init__(self, port, name=None, target_port=None, node_port=None, protocol='TCP'):
-        self.port = port
-        self.name = name
-        self.node_port = node_port
-        self.protocol = protocol
-        if target_port is None:
-            self.target_port = port
-        else:
-            self.target_port = port
-
-
 class CustomObjectsAPIMock:
     pass
 

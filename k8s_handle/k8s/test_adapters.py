@@ -114,10 +114,10 @@ class TestAdapterBuiltInKind(unittest.TestCase):
         self.assertEqual(res, {'key1': 'value1'})
 
     def test_app_replace_service(self):
-        deployment = AdapterBuiltinKind(
+        service = AdapterBuiltinKind(
             api=K8sClientMock(''),
-            spec={'kind': 'Service', 'metadata': {'name': ''}, 'spec': {'replicas': 1}})
-        res = deployment.replace({})
+            spec={'kind': 'Service', 'metadata': {'name': ''}, 'spec': {'type': 'ClusterIP'}})
+        res = service.replace({})
         self.assertEqual(res, {'key1': 'value1'})
 
     def test_app_delete_fail(self):

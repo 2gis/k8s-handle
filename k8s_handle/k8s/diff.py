@@ -19,6 +19,7 @@ IGNORE_FIELDS = [
     'metadata:uid',
     'metadata:namespace',
     'metadata:generation',
+    'metadata:managedFields',
     'status'
 ]
 

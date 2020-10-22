@@ -36,6 +36,7 @@ class Adapter:
         'networking.k8s.io/v1': client.NetworkingV1Api,
         'networking.k8s.io/v1beta1': client.NetworkingV1beta1Api,
         'apiextensions.k8s.io/v1beta1': client.ApiextensionsV1beta1Api,
+        'apiextensions.k8s.io/v1': client.ApiextensionsV1Api,
     }
     kinds_builtin = [
         'ConfigMap', 'CronJob', 'DaemonSet', 'Deployment', 'Endpoints',

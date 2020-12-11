@@ -278,12 +278,12 @@ class AdapterCustomKind(Adapter):
             if self.namespace:
                 return self.api.delete_namespaced_custom_object(
                     self.group, self.version, self.namespace, self.plural, self.name,
-                    client.V1DeleteOptions(propagation_policy='Foreground')
+                    body=client.V1DeleteOptions(propagation_policy='Foreground')
                 )
 
             return self.api.delete_cluster_custom_object(
                 self.group, self.version, self.plural, self.name,
-                client.V1DeleteOptions(propagation_policy='Foreground')
+                body=client.V1DeleteOptions(propagation_policy='Foreground')
             )
 
         except ApiException as e:

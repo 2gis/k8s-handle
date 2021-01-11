@@ -6,7 +6,7 @@ import os
 import sys
 
 from kubernetes import client
-from kubernetes.config import list_kube_config_contexts, load_kube_config
+from kubernetes.config import list_kube_config_contexts, load_kube_config, load_incluster_config
 
 from k8s_handle import config
 from k8s_handle import settings
@@ -72,7 +72,8 @@ def _handler_deploy_destroy(args, command):
         config.PriorityEvaluator(args, context, os.environ),
         args.get('use_kubeconfig'),
         args.get('sync_mode'),
-        args.get('show_logs')
+        args.get('show_logs'),
+        args.get('in_cluster')
     )
 
 
@@ -83,11 +84,12 @@ def _handler_apply_delete(args, command):
         config.PriorityEvaluator(args, {}, os.environ),
         args.get('use_kubeconfig'),
         args.get('sync_mode'),
-        args.get('show_logs')
+        args.get('show_logs'),
+        args.get('in_cluster')
     )
 
 
-def _handler_provision(command, resources, priority_evaluator, use_kubeconfig, sync_mode, show_logs):
+def _handler_provision(command, resources, priority_evaluator, use_kubeconfig, sync_mode, show_logs, in_cluster=False):
     kubeconfig_namespace = None
 
     if priority_evaluator.environment_deprecated():
@@ -98,6 +100,12 @@ def _handler_provision(command, resources, priority_evaluator, use_kubeconfig, s
     if use_kubeconfig:
         try:
             load_kube_config()
+            kubeconfig_namespace = list_kube_config_contexts()[1].get('context').get('namespace')
+        except Exception as e:
+            raise RuntimeError(e)
+    elif in_cluster:
+        try:
+            load_incluster_config()
             kubeconfig_namespace = list_kube_config_contexts()[1].get('context').get('namespace')
         except Exception as e:
             raise RuntimeError(e)
@@ -161,6 +169,8 @@ parser_provisioning.add_argument('--strict', action='store_true', required=False
                                  help='Check existence of all env variables in config.yaml and stop if var is not set')
 parser_provisioning.add_argument('--use-kubeconfig', action='store_true', required=False,
                                  help='Try to use kube config')
+parser_provisioning.add_argument('--in-cluster', action='store_true', required=False,
+                                 help='Setup credentials from the cluster environment')
 parser_provisioning.add_argument('--k8s-handle-debug', action='store_true', required=False,
                                  help='Show K8S client debug messages')
 
@@ -201,6 +211,8 @@ parser_diff = subparsers.add_parser('diff', parents=[parser_target_config],
                                     help='Show diff between current rendered yamls and apiserver yamls')
 parser_diff.add_argument('--use-kubeconfig', action='store_true', required=False,
                          help='Try to use kube config')
+parser_diff.add_argument('--in-cluster', action='store_true', required=False,
+                         help='Setup credentials from the cluster environment')
 parser_diff.set_defaults(func=handler_diff)
 
 

@@ -294,16 +294,19 @@ class AdapterCustomKind(Adapter):
                 '{}'.format(add_indent(e.body)))
             raise ProvisioningError(e)
 
-    def replace(self, _):
+    def replace(self, parameters):
         self._validate()
+
+        if 'resourceVersion' in parameters:
+            self.body['metadata']['resourceVersion'] = parameters['resourceVersion']
 
         try:
             if self.namespace:
-                return self.api.patch_namespaced_custom_object(
+                return self.api.replace_namespaced_custom_object(
                     self.group, self.version, self.namespace, self.plural, self.name, self.body
                 )
 
-            return self.api.patch_cluster_custom_object(
+            return self.api.replace_cluster_custom_object(
                 self.group, self.version, self.plural, self.name, self.body
             )
         except ApiException as e:

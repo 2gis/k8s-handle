@@ -94,6 +94,13 @@ class Provisioner:
             log.info('{} "{}" already exists, replace it'.format(template_body['kind'], kube_client.name))
             parameters = {}
 
+            if hasattr(resource, 'metadata'):
+                if hasattr(resource.metadata, 'resource_version'):
+                    parameters['resourceVersion'] = resource.metadata.resource_version
+            elif 'metadata' in resource:
+                if 'resourceVersion' in resource['metadata']:
+                    parameters['resourceVersion'] = resource['metadata']['resourceVersion']
+
             if template_body['kind'] == 'Service':
                 if hasattr(resource.spec, 'cluster_ip'):
                     parameters['clusterIP'] = resource.spec.cluster_ip
@@ -107,10 +114,6 @@ class Provisioner:
                 if resource.status.phase in ['Bound', 'Released']:
                     log.warning('PersistentVolume has "{}" status, skip replacing'.format(resource.status.phase))
                     return
-
-            if template_body['kind'] in ['Service', 'CustomResourceDefinition', 'PodDisruptionBudget']:
-                if hasattr(resource.metadata, 'resource_version'):
-                    parameters['resourceVersion'] = resource.metadata.resource_version
 
             kube_client.replace(parameters)
 

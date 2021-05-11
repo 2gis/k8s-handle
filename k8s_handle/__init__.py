@@ -116,7 +116,7 @@ def _handler_provision(command, resources, priority_evaluator, use_kubeconfig, s
         for resource in resources:
             deprecation_checker.run(resource)
             available_checker.run(resource)
-    except client.api_client.ApiException:
+    except client.exceptions.ApiException:
         log.warning("Error while getting API version, deprecation check will be skipped.")
 
     if command == COMMAND_DIFF:

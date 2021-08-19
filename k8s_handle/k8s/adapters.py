@@ -18,7 +18,6 @@ RE_CREATE_TIMEOUT = 1
 
 class Adapter:
     api_versions = {
-        'apps/v1beta1': client.AppsV1beta1Api,
         'v1': client.CoreV1Api,
         'extensions/v1beta1': client.ExtensionsV1beta1Api,
         'batch/v1': client.BatchV1Api,

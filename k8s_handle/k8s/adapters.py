@@ -18,7 +18,6 @@ RE_CREATE_TIMEOUT = 1
 
 class Adapter:
     api_versions = {
-        'apps/v1beta1': client.AppsV1beta1Api,
         'v1': client.CoreV1Api,
         'extensions/v1beta1': client.ExtensionsV1beta1Api,
         'batch/v1': client.BatchV1Api,
@@ -40,7 +39,7 @@ class Adapter:
     }
     kinds_builtin = [
         'ConfigMap', 'CronJob', 'DaemonSet', 'Deployment', 'Endpoints',
-        'Ingress', 'Job', 'Namespace', 'PodDisruptionBudget', 'ResourceQuota',
+        'Job', 'Namespace', 'PodDisruptionBudget', 'ResourceQuota',
         'Secret', 'Service', 'ServiceAccount', 'StatefulSet', 'StorageClass',
         'PersistentVolume', 'PersistentVolumeClaim', 'HorizontalPodAutoscaler',
         'Role', 'RoleBinding', 'ClusterRole', 'ClusterRoleBinding', 'CustomResourceDefinition',

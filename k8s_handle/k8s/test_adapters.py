@@ -189,7 +189,7 @@ class TestAdapter(unittest.TestCase):
             Adapter.get_instance(
                 {
                     'kind': Adapter.kinds_builtin[0],
-                    'apiVersion': 'apps/v1beta1'
+                    'apiVersion': 'apps/v1'
                 }
             ), AdapterBuiltinKind)
 

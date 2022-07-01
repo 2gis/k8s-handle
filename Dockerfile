@@ -1,8 +1,8 @@
-FROM python:3.6-alpine
+FROM python:3.10-alpine
 
 LABEL description="Image with k8s-handle" \
-      maintainer="<Infrastructure & Operations> io@2gis.ru" \
-      source="https://github.com/2gis/k8s-handle"
+      maintainer="sre@jetbrains.com" \
+      source="https://github.com/jetbrains-infra/k8s-handle"
 
 ADD . /opt/k8s-handle/
 

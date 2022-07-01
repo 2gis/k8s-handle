@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 class ResourcesAPI(client.ApisApi):
     def list_api_resource_arbitrary(self, group, version):
         try:
+            log.debug(f"calling /apis/{group}/{version}")
             return self.api_client.call_api(
                 '/apis/{}/{}'.format(group, version), 'GET',
                 {},

@@ -19,9 +19,7 @@ RE_CREATE_TIMEOUT = 1
 class Adapter:
     api_versions = {
         'v1': client.CoreV1Api,
-        'extensions/v1beta1': client.ExtensionsV1beta1Api,
         'batch/v1': client.BatchV1Api,
-        'batch/v2alpha1': client.BatchV2alpha1Api,
         'batch/v1beta1': client.BatchV1beta1Api,
         'policy/v1beta1': client.PolicyV1beta1Api,
         'storage.k8s.io/v1': client.StorageV1Api,
@@ -29,12 +27,8 @@ class Adapter:
         'autoscaling/v1': client.AutoscalingV1Api,
         'autoscaling/v2beta2': client.AutoscalingV2beta2Api,
         'rbac.authorization.k8s.io/v1': client.RbacAuthorizationV1Api,
-        'scheduling.k8s.io/v1alpha1': client.SchedulingV1alpha1Api,
-        'scheduling.k8s.io/v1beta1': client.SchedulingV1beta1Api,
         'scheduling.k8s.io/v1': client.SchedulingV1Api,
         'networking.k8s.io/v1': client.NetworkingV1Api,
-        'networking.k8s.io/v1beta1': client.NetworkingV1beta1Api,
-        'apiextensions.k8s.io/v1beta1': client.ApiextensionsV1beta1Api,
         'apiextensions.k8s.io/v1': client.ApiextensionsV1Api,
     }
     kinds_builtin = [

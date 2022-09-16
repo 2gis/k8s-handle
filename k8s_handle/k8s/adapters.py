@@ -21,6 +21,7 @@ class Adapter:
         'v1': client.CoreV1Api,
         'batch/v1': client.BatchV1Api,
         'batch/v1beta1': client.BatchV1beta1Api,
+        'policy/v1': client.PolicyV1Api,
         'policy/v1beta1': client.PolicyV1beta1Api,
         'storage.k8s.io/v1': client.StorageV1Api,
         'apps/v1': client.AppsV1Api,

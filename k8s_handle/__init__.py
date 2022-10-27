@@ -11,10 +11,8 @@ from k8s_handle import settings
 from k8s_handle import templating
 from k8s_handle.exceptions import ProvisioningError, ResourceNotAvailableError
 from k8s_handle.filesystem import InvalidYamlError
-from k8s_handle.k8s.deprecation_checker import ApiDeprecationChecker
 from k8s_handle.k8s.provisioner import Provisioner
 from k8s_handle.k8s.diff import Diff
-from k8s_handle.k8s.availability_checker import ResourceAvailabilityChecker, make_resource_getters_list
 
 COMMAND_DEPLOY = 'deploy'
 COMMAND_DIFF = 'diff'
@@ -108,16 +106,6 @@ def _handler_provision(command, resources, priority_evaluator, use_kubeconfig, s
     if not settings.K8S_NAMESPACE:
         log.info("Default namespace is not set. "
                  "This may lead to provisioning error, if namespace is not set for each resource.")
-
-    try:
-        deprecation_checker = ApiDeprecationChecker(client.VersionApi().get_code().git_version[1:])
-        available_checker = ResourceAvailabilityChecker(make_resource_getters_list())
-
-        for resource in resources:
-            deprecation_checker.run(resource)
-            available_checker.run(resource)
-    except client.exceptions.ApiException:
-        log.warning("Error while getting API version, deprecation check will be skipped.")
 
     if command == COMMAND_DIFF:
         executor = Diff()

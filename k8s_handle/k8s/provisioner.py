@@ -9,6 +9,7 @@ from k8s_handle import settings
 from k8s_handle.templating import get_template_contexts
 from k8s_handle.transforms import split_str_by_capital_letters
 from .adapters import Adapter
+from .warning_handler import WarningHandler
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class Provisioner:
         self.command = command
         self.sync_mode = False if show_logs else sync_mode
         self.show_logs = show_logs
+        self._warning_handler = WarningHandler()
 
     @staticmethod
     def _replicas_count_are_equal(replicas):
@@ -74,7 +76,7 @@ class Provisioner:
             self._deploy(template_body, file_path)
 
     def _deploy(self, template_body, file_path):
-        kube_client = Adapter.get_instance(template_body)
+        kube_client = Adapter.get_instance(template_body, warning_handler=self._warning_handler)
 
         if not kube_client:
             raise RuntimeError(
@@ -172,7 +174,7 @@ class Provisioner:
             self._destroy(template_body, file_path)
 
     def _destroy(self, template_body, file_path):
-        kube_client = Adapter.get_instance(template_body)
+        kube_client = Adapter.get_instance(template_body, warning_handler=self._warning_handler)
 
         if not kube_client:
             raise RuntimeError(

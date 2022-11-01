@@ -32,7 +32,6 @@ class TestDeployHandler(unittest.TestCase):
         configs = {
             'section': os.environ['SECTION'],
             'config': settings.CONFIG_FILE,
-            "use_kubeconfig": True
         }
         # client.exceptions.ApiException should be handled
         handler_deploy(configs)

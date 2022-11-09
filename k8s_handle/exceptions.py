@@ -6,6 +6,10 @@ class ResourceNotAvailableError(Exception):
     pass
 
 
+class InvalidWarningHeader(Exception):
+    pass
+
+
 class InvalidYamlError(Exception):
     pass
 

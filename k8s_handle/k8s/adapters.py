@@ -8,6 +8,7 @@ from k8s_handle import settings
 from k8s_handle.exceptions import ProvisioningError
 from k8s_handle.transforms import add_indent, split_str_by_capital_letters
 from .api_extensions import ResourcesAPI
+from .api_clients import ApiClientWithWarningHandler
 from .mocks import K8sClientMock
 
 log = logging.getLogger(__name__)
@@ -48,7 +49,9 @@ class Adapter:
         self.namespace = spec.get('metadata', {}).get('namespace', "") or settings.K8S_NAMESPACE
 
     @staticmethod
-    def get_instance(spec, api_custom_objects=None, api_resources=None):
+    def get_instance(spec, api_custom_objects=None, api_resources=None, warning_handler=None):
+        api_client = ApiClientWithWarningHandler(warning_handler=warning_handler)
+
         # due to https://github.com/kubernetes-client/python/issues/387
         if spec.get('kind') in Adapter.kinds_builtin:
             if spec.get('apiVersion') == 'test/test':
@@ -59,10 +62,10 @@ class Adapter:
             if not api:
                 return None
 
-            return AdapterBuiltinKind(spec, api())
+            return AdapterBuiltinKind(spec, api(api_client=api_client))
 
-        api_custom_objects = api_custom_objects or client.CustomObjectsApi()
-        api_resources = api_resources or ResourcesAPI()
+        api_custom_objects = api_custom_objects or client.CustomObjectsApi(api_client=api_client)
+        api_resources = api_resources or ResourcesAPI(api_client=api_client)
         return AdapterCustomKind(spec, api_custom_objects, api_resources)
 
 

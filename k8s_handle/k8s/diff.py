@@ -36,11 +36,11 @@ def to_dict(obj):
             if val is not None:
                 result[v] = to_dict(val)
         return result
-    elif type(obj) == list:
+    elif isinstance(obj, list):
         return [to_dict(x) for x in obj]
-    elif type(obj) == datetime:
+    elif isinstance(obj, datetime):
         return str(obj)
-    elif type(obj) == dict:
+    elif isinstance(obj, dict):
         newobj = copy.deepcopy(obj)
         for k, v in obj.items():
             newobj[k] = to_dict(obj[k])

@@ -163,6 +163,21 @@ class AdapterBuiltinKind(Adapter):
                     name=self.name, body=self.body, namespace=self.namespace
                 )
 
+            # Use patch() for Secrets with ServiceAccount's token to preserve data fields (ca.crt, token, namespace),
+            # "kubernetes.io/service-account.uid" annotation and "kubernetes.io/legacy-token-last-used" label
+            # populated by serviceaccount-token controller.
+            #
+            # See for details:
+            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#manually-create-an-api-token-for-a-serviceaccount
+            if self.kind in ['secret']:
+                if ('type' in self.body and self.body['type'] == 'kubernetes.io/service-account-token' and
+                        'annotations' in self.body['metadata'] and
+                        'kubernetes.io/service-account.name' in self.body['metadata']['annotations']):
+
+                    return getattr(self.api, 'patch_namespaced_{}'.format(self.kind))(
+                        name=self.name, body=self.body, namespace=self.namespace
+                    )
+
             if hasattr(self.api, "replace_namespaced_{}".format(self.kind)):
                 return getattr(self.api, 'replace_namespaced_{}'.format(self.kind))(
                     name=self.name, body=self.body, namespace=self.namespace)

@@ -1,4 +1,4 @@
-FROM python:3.10-alpine
+FROM python:3.11-alpine
 
 LABEL description="Image with k8s-handle" \
       maintainer="sre@jetbrains.com" \

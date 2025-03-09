@@ -178,6 +178,13 @@ class AdapterBuiltinKind(Adapter):
                         name=self.name, body=self.body, namespace=self.namespace
                     )
 
+            # pvc should be patched
+            # "spec is immutable after creation except resources.requests and volumeAttributesClassName for bound claims"
+            if self.kind in ['persistent_volume_claim']:
+                return getattr(self.api, 'patch_namespaced_{}'.format(self.kind))(
+                    name=self.name, body=self.body, namespace=self.namespace
+                )
+
             if hasattr(self.api, "replace_namespaced_{}".format(self.kind)):
                 return getattr(self.api, 'replace_namespaced_{}'.format(self.kind))(
                     name=self.name, body=self.body, namespace=self.namespace)

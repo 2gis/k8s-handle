@@ -71,6 +71,20 @@ class Provisioner:
 
         return True
 
+    def _is_pvc_metadata_equal(self, old_obj, new_dict):
+        for new_key, new_value in new_dict.items():
+            if not hasattr(old_obj, new_key):
+                return False
+            if new_key == "annotations" or new_key == "labels":
+                old_obj_dict = getattr(old_obj, new_key)
+                for new_sub_key, new_sub_value in new_value.items():
+                    if not new_sub_key in old_obj_dict:
+                        return False
+                    else:
+                        if not new_sub_value == old_obj_dict[new_sub_key]:
+                            return False
+        return True
+
     def _deploy_all(self, file_path):
         for template_body in get_template_contexts(file_path):
             self._deploy(template_body, file_path)
@@ -109,8 +123,8 @@ class Provisioner:
 
             if template_body['kind'] == 'PersistentVolumeClaim':
                 if self._is_pvc_specs_equals(resource.spec, template_body['spec']):
-                    log.info('PersistentVolumeClaim is not changed')
-                    return
+                    if self._is_pvc_metadata_equal(resource.metadata, template_body['metadata']):
+                        return
 
             if template_body['kind'] == 'PersistentVolume':
                 if resource.status.phase in ['Bound', 'Released']:

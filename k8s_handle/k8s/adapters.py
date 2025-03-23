@@ -181,6 +181,7 @@ class AdapterBuiltinKind(Adapter):
             # pvc should be patched
             # "spec is immutable after creation except resources.requests and volumeAttributesClassName for bound claims"
             if self.kind in ['persistent_volume_claim']:
+                log.info('Note! Deletion of PVC parameters (icluding annotations and labels) should be performed manually')
                 return getattr(self.api, 'patch_namespaced_{}'.format(self.kind))(
                     name=self.name, body=self.body, namespace=self.namespace
                 )

@@ -107,7 +107,10 @@ class Provisioner:
             log.info('{} "{}" does not exist, create it'.format(template_body['kind'], kube_client.name))
             kube_client.create()
         else:
-            log.info('{} "{}" already exists, replace it'.format(template_body['kind'], kube_client.name))
+            if template_body['kind'] == 'PersistentVolumeClaim':
+                log.info('{} "{}" already exists, patch it'.format(template_body['kind'], kube_client.name))
+            else:
+                log.info('{} "{}" already exists, replace it'.format(template_body['kind'], kube_client.name))
             parameters = {}
 
             if hasattr(resource, 'metadata'):
@@ -124,6 +127,7 @@ class Provisioner:
             if template_body['kind'] == 'PersistentVolumeClaim':
                 if self._is_pvc_specs_equals(resource.spec, template_body['spec']):
                     if self._is_pvc_metadata_equal(resource.metadata, template_body['metadata']):
+                        log.info('PersistentVolumeClaim is not changed, skipping')
                         return
 
             if template_body['kind'] == 'PersistentVolume':

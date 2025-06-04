@@ -67,21 +67,22 @@ class Diff:
                 log.info(f'Skipping secret {template_body.get("metadata", {}).get("name")}')
                 continue
             kube_client = Adapter.get_instance(template_body)
-            new = yaml.safe_dump(template_body)
             k8s_object = kube_client.get()
             if k8s_object is None:
                 current_dict = {}
             else:
                 current_dict = to_dict(k8s_object)
-            for field_path in IGNORE_FIELDS:
-                try:
-                    apply_filter(current_dict, field_path)
-                except KeyError:
-                    pass
+            for d in (template_body, current_dict):
+                for field_path in IGNORE_FIELDS:
+                    try:
+                        apply_filter(d, field_path)
+                    except KeyError:
+                        pass
             metadata = current_dict.get('metadata', {})
             if 'annotations' in metadata and metadata['annotations'] == {}:
                 del metadata['annotations']
             current = yaml.safe_dump(current_dict)
+            new = yaml.safe_dump(template_body)
             if new == current:
                 log.info(f' Kind: "{template_body.get("kind")}", '
                          f'name: "{template_body.get("metadata", {}).get("name")}" : NO CHANGES')

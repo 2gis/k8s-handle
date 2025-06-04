@@ -14,12 +14,14 @@ IGNORE_FIELDS = [
     'metadata.annotations:kubectl.kubernetes.io/last-applied-configuration',
     'metadata.annotations:deployment.kubernetes.io/revision',
     'metadata:creationTimestamp',
+    'metadata.labels:kubernetes.io/metadata.name',
     'metadata:resourceVersion',
     'metadata:selfLink',
     'metadata:uid',
     'metadata:namespace',
     'metadata:generation',
     'metadata:managedFields',
+    'spec:finalizers',
     'status'
 ]
 

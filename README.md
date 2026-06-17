@@ -1,5 +1,15 @@
 # k8s-handle
 
+> [!WARNING]
+> **Deprecated.** This project is no longer recommended for new deployments and is being deprecated.
+> Existing documentation is kept for historical reference only.
+>
+> For Kubernetes application delivery, use native Kubernetes ecosystem tools instead:
+> [Helm](https://helm.sh/) for packaging, templating, and release management, and a
+> GitOps workflow for declarative, auditable delivery. For GitOps practices, see the
+> CNCF article
+> [GitOps in 2025: From Old-School Updates to the Modern Way](https://www.cncf.io/blog/2025/06/09/gitops-in-2025-from-old-school-updates-to-the-modern-way/).
+
 Easy CI/CD for Kubernetes clusters with python and jinja2
 
 k8s-handle is a command line tool that facilitates continuous delivery for Kubernetes applications.
